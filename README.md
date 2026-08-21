@@ -1,39 +1,74 @@
-# PicWall · photo wall
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="PicWall — 本地拍立得照片墙：拖拽上传、自动存本地、随机旋转分层渲染">
+</p>
 
-本地拍立得照片墙：拖照片进网页 → 自动存 `uploads/` → 页面渲染为可点击、hover 放大、随机旋转、z-index 分层的拍立得散落布局。零数据库、零外部依赖。
+<p align="center">
+  <b>本地拍立得照片墙</b> — 拖照片进网页，自动存本地，渲染成可点击、可放大、随机旋转分层的拍立得散落墙。
+</p>
 
-## 启动
+<p align="center">
+  <code>零数据库</code> · <code>零外部依赖</code> · <code>单命令启动</code>
+</p>
+
+---
+
+## 截图
+
+<p align="center">
+  <img src="./assets/readme/showcase.jpg" width="80%" alt="PicWall 照片墙：5 张带中文标题的拍立得卡片散落布局">
+</p>
+
+## 这是什么
+
+一个本地优先的拍立得照片墙：把任意照片拖进网页 → 自动存入 `uploads/` → 页面立即渲染为**随机旋转、z-index 分层**的拍立得散落布局。所有数据都在你的磁盘上，不上传任何服务器。
+
+## 为什么这样设计
+
+| 特性 | 说明 |
+|---|---|
+| **零依赖** | 仅 next/react/react-dom，无数据库、无对象存储、无外部 API |
+| **隐私第一** | 照片只存本地 `uploads/`，GET 接口不暴露原始文件名 |
+| **拍立得质感** | 纸纹噪点 + 随机旋转 + 分层 z-index + hover 放大 |
+| **键盘可达** | Tab 聚焦 → Enter 打开大图，Esc 关闭 |
+
+## 快速开始
 
 ```bash
 npm install
-npm run dev   # → http://localhost:3000
+npm run dev
 ```
 
-生产模式：`npm run build && npm start`。
+打开 http://localhost:3000 ，把照片拖进页面，或点右下角 `+`。
 
-## 使用
-
-- **上传**：拖拽照片到页面任意位置，或点击右下角 `+` 按钮（支持多选）
-- **查看**：点击照片卡片打开大图（含 AI 生成的标题与描述）
-- **键盘**：Tab 聚焦卡片 → Enter/Space 打开，Esc 关闭大图
+生产模式：`npm run build && npm start`（Node ≥ 18.18，见 `.nvmrc`）。
 
 ## 存储结构
 
-```
+```text
 uploads/           # 上传的照片（按 id 命名，如 5aeb779cd258.jpg）
 manifest.json      # 照片元数据（id/path/title/desc/uploaded_at）
 ```
 
-`uploads/` 与 `manifest.json` 均为运行时数据，已 gitignore，不入库。
+两者均为运行时数据，已 gitignore，不入库。可通过环境变量覆盖存储位置：
+
+```bash
+PICWALL_DATA_DIR=/data/photos PICWALL_MANIFEST=/data/manifest.json npm run dev
+```
 
 ## API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/api/images` | 照片列表（剔除原始文件名，隐私）|
-| POST | `/api/images` | 上传（multipart，字段 `files`，≤20MB/张，白名单 jpg/png/gif/webp/bmp）|
-| DELETE | `/api/images/:id` | 删除照片 + 元数据 |
+| `GET` | `/api/images` | 照片列表（剔除原始文件名，保护隐私） |
+| `POST` | `/api/images` | 上传（multipart 字段 `files`，≤20MB/张，白名单 jpg/png/gif/webp/bmp） |
+| `DELETE` | `/api/images/:id` | 删除照片与元数据 |
+
+## 测试
+
+```bash
+npm test   # vitest，覆盖 store 增删查 + 并发写 + 损坏 JSON
+```
 
 ## 技术栈
 
-Next.js 15 (App Router) + React 19 + TypeScript，零运行时依赖（仅 next/react/react-dom）。
+Next.js 15 (App Router) · React 19 · TypeScript · vitest
