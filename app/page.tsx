@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import { captionImage } from "@/lib/vision";
 import { bind, play, setEnabled } from "cuelume";
 
 type Img = {
@@ -146,6 +147,18 @@ export default function WallPage() {
       if (failed.length) setError(`${t("upload.error")}: ${failed[0].error}`);
       else setError(null);
       play("success");
+      // caption in-browser (local models) — PATCH result to manifest for persistence
+      for (const img of ok) {
+        void captionImage(img).then(async (cap) => {
+          if (!cap) return;
+          const r = await fetch(`/api/images/${img.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cap),
+          });
+          if (r.ok) setImages((prev) => prev.map((m) => (m.id === img.id ? { ...m, ...cap } : m)));
+        });
+      }
     } catch (e) {
       setError(t("upload.error"));
       play("error");
