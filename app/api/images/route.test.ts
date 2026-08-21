@@ -64,6 +64,26 @@ describe("POST /api/images", () => {
     expect(out[0].title.length).toBeLessThanOrEqual(16);
     expect(out[0].title).toBe("a-very-very-long");
   });
+
+  it("file 单字段兼容上传", async () => {
+    const res = await route.POST(postForm([["file", new File([Buffer.from("x")], "single.jpg")]]));
+    const out = await res.json();
+    expect(out).toHaveLength(1);
+    expect(out[0].filename).toBe("single.jpg");
+  });
+
+  it("files 数组里混入非 File 项被跳过", async () => {
+    const res = await route.POST(postForm([["files", "not-a-file"], ["files", new File([Buffer.from("x")], "real.jpg")]]));
+    const out = await res.json();
+    expect(out).toHaveLength(1);
+    expect(out[0].filename).toBe("real.jpg");
+  });
+
+  it("无扩展名文件 ext 兜底 jpg", async () => {
+    const res = await route.POST(postForm([["files", new File([Buffer.from("x")], "noext")]]));
+    const out = await res.json();
+    expect(out[0].path).toMatch(/\.jpg$/);
+  });
 });
 
 describe("GET /api/images", () => {

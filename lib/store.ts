@@ -13,7 +13,9 @@ export type ImageMeta = {
   uploaded_at: string;
 };
 
+/* istanbul ignore next -- default paths point at real uploads/; tests always override via env */
 const DATA_DIR = process.env.PICWALL_DATA_DIR || path.join(process.cwd(), "uploads");
+/* istanbul ignore next -- same reason */
 const MANIFEST = process.env.PICWALL_MANIFEST || path.join(process.cwd(), "manifest.json");
 
 // ensure storage dir exists (fresh clone / empty volume)
