@@ -79,9 +79,10 @@ export default function WallPage() {
     if (!wall) return;
     const cards = wall.querySelectorAll<HTMLElement>(".polaroid");
     if (!cards.length || window.innerWidth <= 640) return;
-    let row = 0, col = 0;
-    const cols = 4, w = 240, h = 300;
     const saved = loadPos();
+    const cols = 4, w = 240;
+    // masonry: track tallest column, shortest column gets next card
+    const colH = new Array(cols).fill(0);
     cards.forEach((el, i) => {
       const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
       const sp = id ? saved[id] : undefined;
@@ -89,9 +90,11 @@ export default function WallPage() {
         el.style.left = `${sp.x}px`;
         el.style.top = `${sp.y}px`;
       } else {
-        el.style.left = `${col * w + rand(-15, 15)}px`;
-        el.style.top = `${row * h + rand(-10, 10)}px`;
-        if (++col >= cols) { col = 0; row++; }
+        // shortest column wins
+        const c = colH.indexOf(Math.min(...colH));
+        el.style.left = `${c * w + rand(-15, 15)}px`;
+        el.style.top = `${colH[c] + rand(-10, 10)}px`;
+        colH[c] += el.offsetHeight + 20;
       }
       el.style.transform = `rotate(${rand(-6, 6)}deg)`;
       el.style.zIndex = String(Math.floor(rand(1, 20)));
@@ -107,7 +110,7 @@ export default function WallPage() {
         }));
       }
     });
-    wall.style.height = `${row * h + 320}px`;
+    wall.style.height = `${Math.max(...colH) + 320}px`;
   }
 
   function loadPos(): Record<string, { x: number; y: number }> {
@@ -257,7 +260,8 @@ export default function WallPage() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("bloom"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
-              className="w-full h-[180px] object-contain block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10" />
+              className="w-full h-auto block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10"
+              onLoad={() => layout()} />
             <button
               aria-label={t("delete.aria")}
               title={t("delete.aria")}
