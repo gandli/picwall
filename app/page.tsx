@@ -15,6 +15,8 @@ const rand = (a: number, b: number) => Math.random() * (b - a) + a;
 export default function WallPage() {
   const [images, setImages] = useState<Img[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -57,27 +59,34 @@ export default function WallPage() {
   }, [images]);
 
   async function upload(files: FileList | File[]) {
+    setUploading(true);
     const fd = new FormData();
     for (const f of Array.from(files)) fd.append("files", f);
     const res = await fetch("/api/images", { method: "POST", body: fd });
     const list = await res.json();
     setImages((prev) => [...prev, ...list.filter((m: any) => !m.error)]);
+    setUploading(false);
   }
 
   return (
     <main
-      onDragOver={(e) => e.preventDefault()}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {
         e.preventDefault();
+        setDragOver(false);
         if (e.dataTransfer.files.length) upload(e.dataTransfer.files);
       }}
+      style={{ position: "relative" }}
     >
+      {dragOver && <div className="drop-overlay">松手上传</div>}
       <header>
         <h1>PicWall <span className="en">photo wall</span></h1>
         <p>把照片拖到页面任意位置，或点击添加</p>
       </header>
 
       <div className="wall" ref={wallRef}>
+        {!loaded && <div className="empty"><p>加载中…</p></div>}
         {loaded && images.length === 0 && (
           <div className="empty">
             <div className="frame">+</div>
@@ -92,8 +101,9 @@ export default function WallPage() {
             data-src={img.path}
             data-title={img.title}
             data-desc={img.desc}
+            tabIndex={0}
           >
-            <img src={img.path} alt={img.title} loading="lazy" />
+            <img src={img.path} alt={img.title} width={200} height={200} loading="lazy" />
             <div className="cap">{img.title}</div>
           </div>
         ))}
@@ -104,10 +114,12 @@ export default function WallPage() {
         type="file"
         accept="image/*"
         multiple
+        aria-label="选择照片上传"
         style={{ display: "none" }}
         onChange={(e) => { if (e.target.files?.length) upload(e.target.files); e.target.value = ""; }}
       />
-      <button className="add-btn" title="添加照片" onClick={() => fileRef.current?.click()}>+</button>
+      {uploading && <div className="uploading">上传中…</div>}
+      <button className="add-btn" aria-label="添加照片" title="添加照片" onClick={() => fileRef.current?.click()}>+</button>
     </main>
   );
 }

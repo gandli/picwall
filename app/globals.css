@@ -32,6 +32,34 @@ body {
   color: var(--ink);
 }
 
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  background: rgba(44,41,37,.6);
+  backdrop-filter: blur(4px);
+  letter-spacing: .06em;
+}
+
+.uploading {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 200;
+  background: var(--card);
+  color: var(--ink);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: var(--shadow-2);
+}
+
 header { padding: 40px 24px 20px; text-align: center; }
 header h1 {
   font-family: "Songti SC", "Noto Serif SC", Georgia, "Times New Roman", serif;
@@ -62,6 +90,10 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
 }
 .add-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 10px 28px rgba(217,108,74,.5); }
 .add-btn:active { transform: scale(.95); }
+.add-btn:focus-visible, .polaroid:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
 
 .wall {
   position: relative;
@@ -103,7 +135,7 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
   letter-spacing: .06em;
 }
 .polaroid:hover {
-  transform: scale(1.22) rotate(0deg) translateY(-6px) !important;
+  transform: scale(1.12) rotate(0deg) translateY(-6px) !important;
   z-index: 999 !important;
   box-shadow: var(--shadow-2);
 }
@@ -122,6 +154,7 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
 .empty p.sub { font-size: 12px; margin-top: 8px; opacity: .7; }
 
 @media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
   body {
     background:
       radial-gradient(1200px 600px at 15% -5%, #242019, transparent 60%),
@@ -140,7 +173,7 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
 
 @media (prefers-reduced-motion: reduce) {
   .polaroid, .add-btn { transition: none; }
-  .polaroid:hover { transform: scale(1.22) rotate(0deg) !important; }
+  .polaroid:hover { transform: scale(1.12) rotate(0deg) !important; }
 }
 
 @media (max-width: 640px) {
