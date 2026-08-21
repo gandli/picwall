@@ -95,7 +95,7 @@ npm run dev
 当前版本删除走 API（供集成调用）：
 
 ```sh
-curl -X DELETE http://localhost:3000/api/images/<图片ID>
+curl -X DELETE http://localhost:3000/api/images/<图片 ID>
 ```
 
 返回 `{"ok": true}`。图片 ID 可从卡片 DOM 的 `data-src` 属性（`/uploads/<id>.jpg`）或 `GET /api/images` 响应中获得。
