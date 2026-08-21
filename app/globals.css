@@ -129,7 +129,7 @@ header h1 {
   letter-spacing: .02em;
   color: var(--ink);
 }
-header h1 .en { color: var(--accent); font-style: italic; }
+header h1 .en { color: var(--accent); font-weight: 700; }
 header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spacing: .04em; }
 
 .add-btn {
