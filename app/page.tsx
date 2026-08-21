@@ -257,7 +257,7 @@ export default function WallPage() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("bloom"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
-              className="w-full h-[180px] object-cover block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10" />
+              className="w-full h-[180px] object-contain block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10" />
             <button
               aria-label={t("delete.aria")}
               title={t("delete.aria")}
