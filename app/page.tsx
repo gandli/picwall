@@ -39,7 +39,7 @@ export default function WallPage() {
       el.style.top = `${row * h + rand(-10, 10)}px`;
       el.style.transform = `rotate(${rand(-6, 6)}deg)`;
       el.style.zIndex = String(Math.floor(rand(1, 20)));
-      el.style.transitionDelay = `${i * 60}ms`;
+      el.style.transitionDelay = `${i * 50}ms`;
       if (!el.dataset.entered) {
         el.dataset.entered = "1";
         el.style.transition = "opacity .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1)";
