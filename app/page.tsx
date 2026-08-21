@@ -45,7 +45,6 @@ export default function WallPage() {
       el.style.transitionDelay = `${i * 50}ms`;
       if (!el.dataset.entered) {
         el.dataset.entered = "1";
-        el.style.transition = "opacity .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1)";
         el.style.opacity = "0";
         el.style.transform = `rotate(${rand(-6, 6)}deg) scale(.92) translateY(14px)`;
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -84,6 +83,7 @@ export default function WallPage() {
 
   return (
     <main
+      className="relative"
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {
@@ -91,28 +91,38 @@ export default function WallPage() {
         setDragOver(false);
         if (e.dataTransfer.files.length) upload(e.dataTransfer.files);
       }}
-      style={{ position: "relative" }}
     >
-      {dragOver && <div className="drop-overlay">松手上传</div>}
-      <header>
-        <h1>PicWall <span className="en">photo wall</span></h1>
-        <p>把照片拖到页面任意位置，或点击添加</p>
+      {dragOver && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center text-2xl text-white bg-ink/60 tracking-[.06em]">
+          松手上传
+        </div>
+      )}
+
+      <header className="text-center pt-10 px-6 pb-5 max-sm:pt-7 max-sm:px-4 max-sm:pb-3">
+        <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-2xl">
+          PicWall <span className="text-accent font-bold">photo wall</span>
+        </h1>
+        <p className="text-[13px] text-ink-soft mt-2 tracking-[.04em] dark:text-dark-soft">
+          把照片拖到页面任意位置，或点击添加
+        </p>
       </header>
 
-      <div className="wall" ref={wallRef}>
-        {!loaded && <div className="empty"><p>加载中…</p></div>}
-        {error && <div className="empty"><p>{error}</p></div>}
+      <div className="wall relative w-[90%] max-w-[1200px] mx-auto min-h-[60vh] py-6 pb-15 max-sm:columns-2 max-sm:gap-3" ref={wallRef}>
+        {!loaded && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>加载中…</p></div>}
+        {error && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>{error}</p></div>}
         {loaded && !error && images.length === 0 && (
-          <div className="empty">
-            <div className="frame">+</div>
-            <p>暂无照片</p>
-            <p className="sub">拖一张照片到这里，开始你的照片墙</p>
+          <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft">
+            <div className="w-30 h-30 mx-auto mb-5 border-[1.5px] border-dashed border-ink/20 rounded-full flex items-center justify-center text-[34px] text-accent font-[var(--font-serif)]">
+              +
+            </div>
+            <p className="text-[15px]">暂无照片</p>
+            <p className="text-xs mt-2 opacity-70">拖一张照片到这里，开始你的照片墙</p>
           </div>
         )}
         {images.map((img) => (
           <div
             key={img.id}
-            className="polaroid"
+            className="polaroid absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block"
             data-src={img.path}
             data-title={img.title}
             data-desc={img.desc}
@@ -122,23 +132,31 @@ export default function WallPage() {
             onClick={() => setLightbox(img)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); } }}
           >
-            <img src={img.path} alt={img.title} width={200} height={200} loading="lazy" />
-            <div className="cap">{img.title}</div>
+            <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
+              className="w-full h-[180px] object-cover block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10" />
+            <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
+              {img.title}
+            </div>
           </div>
         ))}
       </div>
 
       {lightbox && (
-        <div className="lightbox" onClick={() => setLightbox(null)} role="dialog" aria-modal="true"
+        <div
+          className="fixed inset-0 z-[500] flex items-center justify-center bg-[rgba(26,24,18,.7)] backdrop-blur-[6px] cursor-pointer dark:bg-[rgba(0,0,0,.75)]"
+          onClick={() => setLightbox(null)} role="dialog" aria-modal="true"
           onKeyDown={(e) => { if (e.key === "Escape") setLightbox(null); }}
           tabIndex={-1}
           ref={(el) => el?.focus()}
         >
-          <div className="lightbox-card" onClick={(e) => e.stopPropagation()}>
-            <img src={lightbox.path} alt={lightbox.title} />
-            <div className="lb-title">{lightbox.title}</div>
-            {lightbox.desc && <div className="lb-desc">{lightbox.desc}</div>}
-            <button className="lb-close" aria-label="关闭" onClick={() => setLightbox(null)}>×</button>
+          <div className="bg-card rounded-xl max-w-[90vw] max-h-[85vh] overflow-auto cursor-default shadow-[0_0_0_1px_rgba(0,0,0,.06),0_32px_64px_rgba(0,0,0,.3)] relative dark:bg-dark-card"
+            onClick={(e) => e.stopPropagation()}>
+            <img src={lightbox.path} alt={lightbox.title} className="block max-w-[90vw] max-h-[70vh] object-contain" />
+            <div className="pt-3.5 px-5 pb-1 text-[17px] font-semibold font-[var(--font-serif)] dark:text-dark-text">{lightbox.title}</div>
+            {lightbox.desc && <div className="px-5 pb-4.5 text-[13px] text-ink-soft leading-6 dark:text-dark-soft">{lightbox.desc}</div>}
+            <button
+              className="absolute top-2 right-2 w-8 h-8 rounded-full border-none bg-black/45 text-white text-lg leading-none flex items-center justify-center cursor-pointer hover:bg-black/60"
+              aria-label="关闭" onClick={() => setLightbox(null)}>×</button>
           </div>
         </div>
       )}
@@ -149,11 +167,17 @@ export default function WallPage() {
         accept="image/*"
         multiple
         aria-label="选择照片上传"
-        style={{ display: "none" }}
+        className="hidden"
         onChange={(e) => { if (e.target.files?.length) upload(e.target.files); e.target.value = ""; }}
       />
-      {uploading && <div className="uploading">上传中…</div>}
-      <button className="add-btn" aria-label="添加照片" title="添加照片" onClick={() => fileRef.current?.click()}>+</button>
+      {uploading && (
+        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] bg-card text-ink px-6 py-3 rounded-lg text-sm shadow-[var(--shadow-polaroid-hover)] dark:bg-dark-card dark:text-dark-text">
+          上传中…
+        </div>
+      )}
+      <button
+        className="add-btn fixed right-6 bottom-6 w-12 h-12 rounded-full border-none bg-accent text-white text-2xl leading-none cursor-pointer shadow-[0_6px_20px_rgba(217,108,74,.4)] transition-transform duration-150 ease-out hover:translate-y-[-2px] hover:scale-105 hover:shadow-[0_10px_28px_rgba(217,108,74,.5)] active:scale-95 select-none z-[100]"
+        aria-label="添加照片" title="添加照片" onClick={() => fileRef.current?.click()}>+</button>
     </main>
   );
 }
