@@ -256,8 +256,8 @@ export default function WallPage() {
               window.addEventListener("pointerup", up);
               window.addEventListener("pointercancel", up);
             }}
-            onClick={() => { if (suppressClick.current) return; setLightbox(img); play("bloom"); }}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("bloom"); } }}
+            onClick={() => { if (suppressClick.current) return; setLightbox(img); play("arrival"); }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("arrival"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
               className="w-full h-auto block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10"
@@ -266,7 +266,7 @@ export default function WallPage() {
               aria-label={t("delete.aria")}
               title={t("delete.aria")}
               data-cuelume-press
-              onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("press"); }}
+              onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("toggle"); }}
               className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-[rgba(26,24,18,.55)] text-white text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100"
             >✕</button>
             <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
@@ -280,8 +280,8 @@ export default function WallPage() {
       {lightbox && (
         <div
           className="fixed inset-0 z-[500] flex items-center justify-center bg-[rgba(26,24,18,.7)] backdrop-blur-[6px] cursor-pointer dark:bg-[rgba(0,0,0,.75)]"
-          onClick={() => { setLightbox(null); play("droplet"); }} role="dialog" aria-modal="true"
-          onKeyDown={(e) => { if (e.key === "Escape") { setLightbox(null); play("droplet"); } }}
+          onClick={() => { setLightbox(null); play("page"); }} role="dialog" aria-modal="true"
+          onKeyDown={(e) => { if (e.key === "Escape") { setLightbox(null); play("page"); } }}
           tabIndex={-1}
           ref={(el) => el?.focus()}
         >
@@ -292,7 +292,7 @@ export default function WallPage() {
             {lightbox.desc && <div className="px-5 pb-4.5 text-[13px] text-ink-soft leading-6 dark:text-dark-soft">{lightbox.desc}</div>}
             <button
               className="absolute top-2 right-2 w-8 h-8 rounded-full border-none bg-black/45 text-white text-lg leading-none flex items-center justify-center cursor-pointer hover:bg-black/60"
-              aria-label={t("close.aria")} onClick={() => { setLightbox(null); play("droplet"); }}>×</button>
+              aria-label={t("close.aria")} onClick={() => { setLightbox(null); play("page"); }}>×</button>
           </div>
         </div>
       )}
@@ -300,8 +300,8 @@ export default function WallPage() {
       {confirmDel && (
         <div
           className="fixed inset-0 z-[600] flex items-center justify-center bg-[rgba(26,24,18,.55)] backdrop-blur-[4px]"
-          onClick={() => setConfirmDel(null)} role="alertdialog" aria-modal="true"
-          onKeyDown={(e) => { if (e.key === "Escape") setConfirmDel(null); }}
+          onClick={() => { setConfirmDel(null); play("press"); }} role="alertdialog" aria-modal="true"
+          onKeyDown={(e) => { if (e.key === "Escape") { setConfirmDel(null); play("press"); } }}
           tabIndex={-1}
         >
           <div
@@ -313,12 +313,11 @@ export default function WallPage() {
             <div className="flex gap-2.5 mt-5">
               <button
                 className="flex-1 h-9 rounded-full border border-black/10 text-[13px] text-ink-soft cursor-pointer hover:bg-paper-2 dark:border-white/10 dark:text-dark-soft dark:hover:bg-dark-bg"
-                onClick={() => setConfirmDel(null)}
+                onClick={() => { setConfirmDel(null); play("press"); }}
               >{t("delete.cancel")}</button>
               <button
                 className="flex-1 h-9 rounded-full bg-[#c0392b] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#a93226]"
-                data-cuelume-press
-                onClick={() => delImage(confirmDel)}
+                onClick={() => { play("pulse"); delImage(confirmDel); }}
               >{t("delete.confirm")}</button>
             </div>
           </div>
