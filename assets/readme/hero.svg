@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="400" viewBox="0 0 1200 400"
+     role="img" aria-labelledby="title desc">
+  <title id="title">PicWall — 本地拍立得照片墙</title>
+  <desc id="desc">拖照片进网页，自动存本地，渲染为随机旋转分层的拍立得散落墙。</desc>
+
+  <rect width="1200" height="400" rx="26" fill="#f7f3ea"/>
+  <rect x="1" y="1" width="1198" height="398" rx="25" fill="none" stroke="#e5dcc8" stroke-width="2"/>
+
+  <!-- 纸纹噪点 -->
+  <g opacity="0.35" fill="#d9cbb0">
+    <circle cx="80" cy="60" r="1"/><circle cx="160" cy="120" r="1.2"/>
+    <circle cx="240" cy="45" r="0.8"/><circle cx="320" cy="90" r="1.1"/>
+    <circle cx="500" cy="30" r="0.9"/><circle cx="620" cy="140" r="1"/>
+    <circle cx="700" cy="55" r="0.8"/><circle cx="880" cy="100" r="1.2"/>
+    <circle cx="1020" cy="50" r="0.9"/><circle cx="1120" cy="130" r="1"/>
+    <circle cx="120" cy="330" r="1"/><circle cx="420" cy="360" r="0.8"/>
+    <circle cx="640" cy="340" r="1.1"/><circle cx="900" cy="370" r="0.9"/>
+  </g>
+
+  <!-- 拍立得卡片组（右侧 proof） -->
+  <g transform="translate(680 60)">
+    <g transform="rotate(-6 130 140)">
+      <rect x="20" y="10" width="220" height="260" rx="4" fill="#fffdf8" stroke="#d8cdb6" stroke-width="1"/>
+      <rect x="34" y="24" width="192" height="170" rx="2" fill="#e9e2d4"/>
+      <circle cx="92" cy="80" r="26" fill="#d9cbb0"/>
+      <circle cx="150" cy="130" r="18" fill="#cdbda0"/>
+      <rect x="50" y="205" width="120" height="8" rx="4" fill="#d9cbb0"/>
+      <rect x="70" y="222" width="80" height="6" rx="3" fill="#e5dcc8"/>
+    </g>
+    <g transform="rotate(4 300 150)">
+      <rect x="190" y="40" width="220" height="260" rx="4" fill="#fffdf8" stroke="#d8cdb6" stroke-width="1"/>
+      <rect x="204" y="54" width="192" height="170" rx="2" fill="#e9e2d4"/>
+      <circle cx="270" cy="120" r="30" fill="#cdbda0"/>
+      <rect x="232" y="235" width="140" height="8" rx="4" fill="#d9cbb0"/>
+      <rect x="252" y="252" width="100" height="6" rx="3" fill="#e5dcc8"/>
+    </g>
+    <g transform="rotate(-2 200 280)">
+      <rect x="100" y="270" width="200" height="100" rx="4" fill="#fffdf8" stroke="#d8cdb6" stroke-width="1"/>
+      <rect x="112" y="280" width="176" height="60" rx="2" fill="#e9e2d4"/>
+      <circle cx="180" cy="310" r="18" fill="#cdbda0"/>
+    </g>
+  </g>
+
+  <!-- 标题区（左侧） -->
+  <g transform="translate(56 84)">
+    <text x="0" y="0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" letter-spacing="3" fill="#b0835f" font-weight="600">LOCAL-FIRST PHOTO WALL</text>
+    <text x="0" y="52" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif" font-size="58" font-weight="700" fill="#2c2925">PicWall</text>
+    <text x="0" y="92" font-family="Georgia, Songti SC, serif" font-size="26" font-style="italic" fill="#d96c4a">把照片散落在墙上的感觉</text>
+    <text x="0" y="150" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif" font-size="18" fill="#7a7266">拖拽上传 → 自动存本地 → 随机旋转分层渲染</text>
+    <text x="0" y="180" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif" font-size="18" fill="#7a7266">零数据库 · 零外部依赖 · 单命令启动</text>
+
+    <g transform="translate(0 216)">
+      <rect x="0" y="0" width="150" height="40" rx="20" fill="#d96c4a"/>
+      <text x="75" y="25" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#ffffff" font-weight="600">npm run dev</text>
+      <text x="166" y="25" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#8a8172">→ localhost:3000</text>
+    </g>
+  </g>
+</svg>
