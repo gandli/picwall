@@ -77,7 +77,9 @@ const shot = (page, name) => page.screenshot({ path: path.join(SHOTS, name) });
 const clearOverlays = (page) =>
   page.evaluate(() => document.querySelectorAll("#__guide_annotate").forEach((el) => el.remove()));
 
-const browser = await chromium.launch();
+const browser = await chromium.launchPersistentContext("/tmp/picwall-guide-profile", {
+  headless: true,
+}); // persistent profile: local caption models (~330MB) stay cached across regens
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
 // ---- 1. 启动与浏览照片墙 ----
@@ -99,6 +101,22 @@ await page.waitForFunction(() => document.querySelectorAll(".polaroid").length >
 await page.waitForTimeout(700);
 await shot(page, "03-after-upload.png");
 
+// ---- 8. AI 图像描述（本地模型自动生成中文标题）----
+// wait until the new card's caption replaces the filename (local wasm pipeline, ~4s warm)
+await page.waitForFunction(
+  () => {
+    const cards = [...document.querySelectorAll(".polaroid")];
+    return cards.some((c) => /[\u4e00-\u9fff]/.test(c.textContent));
+  },
+  undefined,
+  { timeout: 120_000 },
+);
+await page.mouse.move(10, 10); // drop hover so no card is mid-lift
+await page.waitForTimeout(500);
+await annotate(page, { from: [400, 300], to: [640, 420], label: "AI 自动生成标题" });
+await shot(page, "08-ai-caption.png");
+await clearOverlays(page);
+
 // ---- 4. 浏览大图 (lightbox) ----
 await page.locator(".polaroid").last().click();
 await page.waitForSelector('[role="dialog"]');
@@ -109,7 +127,7 @@ await shot(page, "04-lightbox.png");
 await clearOverlays(page);
 
 // close via button
-await page.getByRole("button", { name: "关闭" }).click();
+await page.getByRole("button", { name: "关闭", exact: true }).click();
 await page.waitForSelector('[role="dialog"]', { state: "detached" });
 
 // ---- 5. 键盘操作 ----
