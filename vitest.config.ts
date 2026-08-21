@@ -9,5 +9,10 @@ export default defineConfig({
   },
   test: {
     exclude: [...configDefaults.exclude, "e2e/**"],
+    coverage: {
+      include: ["lib/**/*.ts", "app/api/**/*.ts"],
+      exclude: ["**/*.test.ts"],
+      thresholds: { statements: 100, branches: 100, functions: 100, lines: 100 },
+    },
   },
 });
