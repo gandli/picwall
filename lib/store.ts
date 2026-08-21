@@ -16,6 +16,9 @@ export type ImageMeta = {
 const DATA_DIR = process.env.PICWALL_DATA_DIR || path.join(process.cwd(), "uploads");
 const MANIFEST = process.env.PICWALL_MANIFEST || path.join(process.cwd(), "manifest.json");
 
+// ensure storage dir exists (fresh clone / empty volume)
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
 
 // serialize manifest writes so concurrent uploads don't clobber each other
@@ -35,13 +38,17 @@ export function getImages(): ImageMeta[] {
   }
 }
 
-export function addImage(meta: Omit<ImageMeta, "id" | "path" | "uploaded_at">): Promise<ImageMeta> {
+export function addImage(
+  meta: Omit<ImageMeta, "id" | "path" | "uploaded_at"> & { buf?: Buffer }
+): Promise<ImageMeta> {
   return enqueue(() => {
     const id = Math.random().toString(36).slice(2, 14);
     const ext = ALLOWED_EXT.has(path.extname(meta.filename).toLowerCase().slice(1))
       ? path.extname(meta.filename).toLowerCase()
       : ".jpg";
     const fname = `${id}${ext}`;
+    const dest = path.join(DATA_DIR, fname);
+    if (meta.buf) fs.writeFileSync(dest, meta.buf); // write file first
     const images = getImages();
     const entry: ImageMeta = {
       ...meta,
@@ -50,7 +57,7 @@ export function addImage(meta: Omit<ImageMeta, "id" | "path" | "uploaded_at">): 
       uploaded_at: new Date().toISOString(),
     };
     images.push(entry);
-    fs.writeFileSync(MANIFEST, JSON.stringify(images, null, 2));
+    fs.writeFileSync(MANIFEST, JSON.stringify(images, null, 2)); // then manifest
     return entry;
   });
 }

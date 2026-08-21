@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "node:fs";
-import { addImage, getImages, UPLOAD_DIR } from "@/lib/store";
+import { addImage, getImages } from "@/lib/store";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -39,8 +38,8 @@ export async function POST(req: NextRequest) {
       height: 0,
       title: f.name.replace(/\.[^.]+$/, "").slice(0, 16),
       desc: "",
+      buf,
     });
-    fs.writeFileSync(`${UPLOAD_DIR}/${meta.path.split("/").pop()}`, buf);
     out.push(meta);
   }
   return NextResponse.json(out);
