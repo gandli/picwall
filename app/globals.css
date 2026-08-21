@@ -126,7 +126,8 @@ header h1 {
   font-family: "Songti SC", "Noto Serif SC", Georgia, "Times New Roman", serif;
   font-size: 30px;
   font-weight: 600;
-  letter-spacing: .02em;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   color: var(--ink);
 }
 header h1 .en { color: var(--accent); font-weight: 700; }
@@ -226,6 +227,10 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
 }
 .empty p { font-size: 15px; }
 .empty p.sub { font-size: 12px; margin-top: 8px; opacity: .7; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .lightbox { backdrop-filter: none; }
+}
 
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: dark; }

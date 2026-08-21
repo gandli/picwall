@@ -122,7 +122,11 @@ export default function WallPage() {
       </div>
 
       {lightbox && (
-        <div className="lightbox" onClick={() => setLightbox(null)} role="dialog" aria-modal="true">
+        <div className="lightbox" onClick={() => setLightbox(null)} role="dialog" aria-modal="true"
+          onKeyDown={(e) => { if (e.key === "Escape") setLightbox(null); }}
+          tabIndex={-1}
+          ref={(el) => el?.focus()}
+        >
           <div className="lightbox-card" onClick={(e) => e.stopPropagation()}>
             <img src={lightbox.path} alt={lightbox.title} />
             <div className="lb-title">{lightbox.title}</div>
