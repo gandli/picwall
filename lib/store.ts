@@ -64,6 +64,21 @@ export function addImage(
   });
 }
 
+export function updateImageMeta(
+  id: string,
+  patch: Partial<Pick<ImageMeta, "title" | "desc">>
+): Promise<ImageMeta | null> {
+  // serialized with uploads via the write queue so RMW can't clobber
+  return enqueue(() => {
+    const images = getImages();
+    const target = images.find((i) => i.id === id);
+    if (!target) return null;
+    Object.assign(target, patch);
+    fs.writeFileSync(MANIFEST, JSON.stringify(images, null, 2));
+    return target;
+  });
+}
+
 export function deleteImage(id: string): boolean {
   const images = getImages();
   const target = images.find((i) => i.id === id);
