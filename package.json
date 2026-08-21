@@ -15,7 +15,8 @@
   "devDependencies": {
     "@types/node": "20.17.6",
     "@types/react": "19.2.18",
-    "typescript": "5.8.2"
+    "typescript": "5.8.2",
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=18.18.0"

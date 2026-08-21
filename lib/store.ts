@@ -13,8 +13,8 @@ export type ImageMeta = {
   uploaded_at: string;
 };
 
-const DATA_DIR = path.join(process.cwd(), "uploads");
-const MANIFEST = path.join(process.cwd(), "manifest.json");
+const DATA_DIR = process.env.PICWALL_DATA_DIR || path.join(process.cwd(), "uploads");
+const MANIFEST = process.env.PICWALL_MANIFEST || path.join(process.cwd(), "manifest.json");
 
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
 
