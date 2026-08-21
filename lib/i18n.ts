@@ -65,7 +65,8 @@ export function saveLang(l: Lang, storage?: Pick<Storage, "setItem">) {
 
 /* istanbul ignore next -- React hook wrapper; logic tested via loadLang/saveLang, interactions via E2E */
 export function useI18n() {
-  const [lang, setLangState] = useState<Lang>(loadLang);
+  // fixed initial value: SSR + hydration first frame must match (no localStorage on server)
+  const [lang, setLangState] = useState<Lang>("zh");
 
   useEffect(() => {
     setLangState(loadLang());
