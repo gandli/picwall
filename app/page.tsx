@@ -26,6 +26,8 @@ export default function WallPage() {
   const [soundOn, setSoundOn] = useState(true);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // fixed per-card tilt (mobile): stable across re-renders/resize
+  const tilts = useRef<number[]>([]);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -146,10 +148,10 @@ export default function WallPage() {
             className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
           >{soundOn ? "🔊" : "🔇"}</button>
         </div>
-        <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-2xl">
+        <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-xl max-sm:pr-20 max-sm:leading-[1.15]">
           PicWall <span className="text-accent font-bold">{t("app.subtitle")}</span>
         </h1>
-        <p className="text-[13px] text-ink-soft mt-2 tracking-[.04em] dark:text-dark-soft">
+        <p className="text-[13px] text-ink-soft mt-2 tracking-[.04em] dark:text-dark-soft max-sm:text-[12px] max-sm:pr-20">
           {t("app.tagline")}
         </p>
       </header>
@@ -166,10 +168,13 @@ export default function WallPage() {
             <p className="text-xs mt-2 opacity-70">{t("empty.hint")}</p>
           </div>
         )}
-        {images.map((img) => (
+        {images.map((img, i) => {
+          if (tilts.current[i] === undefined) tilts.current[i] = rand(-3, 3);
+          return (
           <div
             key={img.id}
-            className="polaroid absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block"
+            className="polaroid absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block max-sm:rotate-[var(--tilt)]"
+            style={{ "--tilt": `${tilts.current[i]}deg` } as React.CSSProperties}
             data-src={img.path}
             data-title={img.title}
             data-desc={img.desc}
@@ -186,7 +191,8 @@ export default function WallPage() {
               {img.title}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {lightbox && (
