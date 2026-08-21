@@ -66,5 +66,41 @@ describe("store", () => {
     ]);
     expect(store.getImages()).toHaveLength(3);
   });
+
+  it("evl.sh 非法 ext 兜底 .jpg", async () => {
+    const e = await store.addImage({ filename: "evil.sh", size: 1, width: 0, height: 0, title: "", desc: "" });
+    expect(e.path).toMatch(/\.jpg$/);
+    expect(e.path).not.toMatch(/\.sh$/);
+  });
+
+  it("超长 title 不截断 (store 层原样保存)", async () => {
+    const long = "x".repeat(100);
+    const e = await store.addImage({ filename: "a.jpg", size: 1, width: 0, height: 0, title: long, desc: "" });
+    expect(e.title).toBe(long);
+    expect(store.getImages()[0].title).toBe(long);
+  });
+
+  it("先写文件后写 manifest：文件写失败不留 manifest 条目", async () => {
+    const e = await store.addImage({ filename: "a.jpg", size: 1, width: 0, height: 0, title: "", desc: "", buf: Buffer.from("x") });
+    // 模拟文件写失败：删掉 DATA_DIR 后再次 addImage with buf
+    fs.rmSync(path.join(tmpDir, "uploads"), { recursive: true, force: true });
+    fs.writeFileSync(path.join(tmpDir, "uploads"), "now-a-file");
+    await expect(
+      store.addImage({ filename: "b.jpg", size: 1, width: 0, height: 0, title: "", desc: "", buf: Buffer.from("y") })
+    ).rejects.toThrow();
+    // manifest 仍只有第一条
+    expect(store.getImages()).toHaveLength(1);
+  });
+
+  it("getImages 在 manifest 是数组但缺字段时仍返回", async () => {
+    fs.writeFileSync(process.env.PICWALL_MANIFEST!, JSON.stringify([{ id: "x" }]));
+    expect(store.getImages()).toEqual([{ id: "x" }]);
+  });
+
+  it("deleteImage 同时删除磁盘文件", async () => {
+    const e = await store.addImage({ filename: "c.jpg", size: 3, width: 0, height: 0, title: "", desc: "", buf: Buffer.from("x") });
+    expect(store.deleteImage(e.id)).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, "uploads", `${e.id}.jpg`))).toBe(false);
+  });
 });
 
