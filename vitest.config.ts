@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, configDefaults } from "vitest/config";
 import path from "node:path";
 
 export default defineConfig({
@@ -6,5 +6,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname),
     },
+  },
+  test: {
+    exclude: [...configDefaults.exclude, "e2e/**"],
   },
 });
