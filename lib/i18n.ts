@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 export type Lang = "zh" | "en";
 
-const DICTS: Record<Lang, Record<string, string>> = {
+export const DICTS: Record<Lang, Record<string, string>> = {
   zh: {
     "app.title": "PicWall",
     "app.subtitle": "photo wall",
@@ -41,17 +41,29 @@ const DICTS: Record<Lang, Record<string, string>> = {
   },
 };
 
+export function loadLang(storage?: Pick<Storage, "getItem">): Lang {
+  // lazy resolve: default param would eval localStorage on server (ReferenceError)
+  const s = storage ?? (typeof localStorage !== "undefined" ? localStorage : null);
+  const saved = s?.getItem("picwall.lang");
+  return saved === "en" || saved === "zh" ? saved : "zh";
+}
+
+export function saveLang(l: Lang, storage?: Pick<Storage, "setItem">) {
+  const s = storage ?? (typeof localStorage !== "undefined" ? localStorage : null);
+  s?.setItem("picwall.lang", l);
+}
+
+/* istanbul ignore next -- React hook wrapper; logic tested via loadLang/saveLang, interactions via E2E */
 export function useI18n() {
-  const [lang, setLangState] = useState<Lang>("zh");
+  const [lang, setLangState] = useState<Lang>(loadLang);
 
   useEffect(() => {
-    const saved = localStorage.getItem("picwall.lang") as Lang | null;
-    if (saved === "en" || saved === "zh") setLangState(saved);
+    setLangState(loadLang());
   }, []);
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    localStorage.setItem("picwall.lang", l);
+    saveLang(l);
   };
   const t = (key: string) => DICTS[lang][key] ?? key;
   return { lang, setLang, t };
