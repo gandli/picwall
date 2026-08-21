@@ -1,6 +1,6 @@
 # PicWall 使用手册
 
-> 本文档由 **Playwright 自动驱动真实应用** 生成 — 截图来自实机运行，操作步骤与当前代码同步。重新生成：`node docs/guide/capture.mjs && node docs/guide/render.mjs`（或 CI 自动触发）。
+> 本文档由 **Playwright 自动驱动真实应用** 生成 — 截图来自实机运行，操作步骤与当前代码同步。重新生成：`node docs/guide/capture.mjs`（或 CI 自动触发）。
 
 PicWall 是一个本地拍立得照片墙：把照片拖进浏览器，散落成一张张拍立得卡片。
 
@@ -15,6 +15,7 @@ PicWall 是一个本地拍立得照片墙：把照片拖进浏览器，散落成
 4. [浏览照片大图](#4-浏览照片大图)
 5. [键盘操作](#5-键盘操作)
 6. [删除照片](#6-删除照片)
+8. [AI 图像描述](#8-ai-图像描述)
 7. [异常处理](#7-异常处理)
 
 ---
@@ -63,7 +64,7 @@ npm run dev
 
 ## 4. 浏览照片大图
 
-点击任意拍立得卡片，弹出大图预览（lightbox）：深色毛玻璃遮罩，居中显示大图与标题。
+点击任意拍立得卡片，弹出大图预览（lightbox）：深色毛玻璃遮罩，居中显示大图与 AI 生成的标题和描述。
 
 ![大图预览](screenshots/04-lightbox.png)
 
@@ -92,16 +93,38 @@ npm run dev
 
 ## 6. 删除照片
 
-当前版本删除走 API（供集成调用）：
+1. 鼠标悬停在要删除的卡片上，右上角出现 **✕** 按钮：
 
-```sh
-curl -X DELETE http://localhost:3000/api/images/<图片 ID>
-```
+   ![删除按钮](screenshots/07-wall-clean.png)
 
-返回 `{"ok": true}`。图片 ID 可从卡片 DOM 的 `data-src` 属性（`/uploads/<id>.jpg`）或 `GET /api/images` 响应中获得。
+2. 点击 ✕ 弹出确认框，点击 **删除这张照片？** 按钮确认。
 
-删除后刷新页面，卡片消失，`uploads/` 与 `manifest.json` 同步更新。
+3. 卡片立即消失，存储同步清理（`uploads/` 文件移除 + `manifest.json` 更新）。
 
+> 在桌面端，× 按钮默认悬停才显示（避免误触）；移动端始终可见。也可通过 API 删除：`curl -X DELETE http://localhost:3000/api/images/<图片 ID>`
+
+---
+
+## 8. AI 图像描述
+
+PicWall 内置浏览器端 AI 模型，上传图片后自动生成中文标题与描述：
+
+- **描述模型**：`Xenova/vit-gpt2-image-captioning`（~246MB）
+- **翻译模型**：`Xenova/opus-mt-en-zh`（~80MB）
+- **运行方式**：WebAssembly（无 GPU 依赖），全本地推理不上传云端
+
+首次上传会下载模型（约 330MB），浏览器 Cache API 持久化缓存；后续生成每张约 **4 秒**：
+
+![AI 自动生成标题](screenshots/08-ai-caption.png)
+
+生成的标题和描述写入持久化索引，关闭页面不会丢失；同一张图片只推理一次。
+
+| 动作 | 耗时 |
+|------|------|
+| 首次模型下载 | ~80 秒（一次性） |
+| 生成中文标题（热缓存） | ~4 秒/张 |
+
+> 提示：如果网络禁用或模型下载失败，图片仍正常上传，仅跳过标题生成。
 ---
 
 ## 7. 异常处理
