@@ -67,12 +67,19 @@ export default function WallPage() {
 
   async function upload(files: FileList | File[]) {
     setUploading(true);
-    const fd = new FormData();
-    for (const f of Array.from(files)) fd.append("files", f);
-    const res = await fetch("/api/images", { method: "POST", body: fd });
-    const list = await res.json();
-    setImages((prev) => [...prev, ...list.filter((m: any) => !m.error)]);
-    setUploading(false);
+    try {
+      const fd = new FormData();
+      for (const f of Array.from(files)) fd.append("files", f);
+      const res = await fetch("/api/images", { method: "POST", body: fd });
+      if (!res.ok) throw new Error(`上传失败 (${res.status})`);
+      const list = await res.json();
+      setImages((prev) => [...prev, ...list.filter((m: any) => !m.error)]);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "上传失败");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (

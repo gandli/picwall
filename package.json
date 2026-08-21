@@ -16,5 +16,8 @@
     "@types/node": "20.17.6",
     "@types/react": "19.2.18",
     "typescript": "5.8.2"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   }
 }

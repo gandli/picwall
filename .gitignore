@@ -1,2 +1,19 @@
-.venv/
-__pycache__/
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+out/
+
+# user data (local photo wall storage)
+uploads/
+manifest.json
+
+# env
+.env
+.env.*
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts

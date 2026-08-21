@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "node:fs";
 import { addImage, getImages, UPLOAD_DIR } from "@/lib/store";
 
+const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+
+function publicMeta(m: { id: string; path: string; width: number; height: number; size: number; title: string; desc: string; uploaded_at: string }) {
+  return { id: m.id, path: m.path, width: m.width, height: m.height, size: m.size, title: m.title, desc: m.desc, uploaded_at: m.uploaded_at };
+}
+
 export async function GET() {
-  return NextResponse.json(getImages());
+  return NextResponse.json(getImages().map(publicMeta));
 }
 
 export async function POST(req: NextRequest) {
@@ -22,7 +28,11 @@ export async function POST(req: NextRequest) {
       continue;
     }
     const buf = Buffer.from(await f.arrayBuffer());
-    const meta = addImage({
+    if (buf.length > MAX_SIZE) {
+      out.push({ error: `文件过大（>20MB）`, filename: f.name });
+      continue;
+    }
+    const meta = await addImage({
       filename: f.name,
       size: buf.length,
       width: 0,
