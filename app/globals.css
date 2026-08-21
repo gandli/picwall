@@ -53,13 +53,13 @@ body::before {
 }
 .polaroid:hover {
   transform: scale(1.12) rotate(0deg) translateY(-6px) !important;
-  z-index: 999 !important;
+  z-index: 200 !important; /* above siblings (≤100), below lightbox/confirm overlays (≥500) */
   box-shadow: var(--shadow-polaroid-hover);
 }
 @media (hover: hover) and (pointer: fine) {
   .polaroid:hover {
     transform: scale(1.12) rotate(0deg) translateY(-6px) !important;
-    z-index: 999 !important;
+    z-index: 200 !important;
     box-shadow: var(--shadow-polaroid-hover);
   }
 }
