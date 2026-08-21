@@ -27,6 +27,9 @@ export const DICTS: Record<Lang, Record<string, string>> = {
     "delete.irreversible": "此操作不可撤销",
     "delete.cancel": "取消",
     "delete.error": "删除失败",
+    "upload.error": "上传失败",
+    "sound.on.aria": "关闭音效",
+    "sound.off.aria": "开启音效",
   },
   en: {
     "app.title": "PicWall",
@@ -48,6 +51,9 @@ export const DICTS: Record<Lang, Record<string, string>> = {
     "delete.irreversible": "This action cannot be undone",
     "delete.cancel": "Cancel",
     "delete.error": "Delete failed",
+    "upload.error": "Upload failed",
+    "sound.on.aria": "Mute sound",
+    "sound.off.aria": "Enable sound",
   },
 };
 
