@@ -25,6 +25,7 @@ export default function WallPage() {
   const [dark, setDark] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [confirmDel, setConfirmDel] = useState<Img | null>(null);
+  const suppressClick = useRef(false);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   // fixed per-card tilt (mobile): stable across re-renders/resize
@@ -80,9 +81,18 @@ export default function WallPage() {
     if (!cards.length || window.innerWidth <= 640) return;
     let row = 0, col = 0;
     const cols = 4, w = 240, h = 300;
+    const saved = loadPos();
     cards.forEach((el, i) => {
-      el.style.left = `${col * w + rand(-15, 15)}px`;
-      el.style.top = `${row * h + rand(-10, 10)}px`;
+      const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
+      const sp = id ? saved[id] : undefined;
+      if (sp) {
+        el.style.left = `${sp.x}px`;
+        el.style.top = `${sp.y}px`;
+      } else {
+        el.style.left = `${col * w + rand(-15, 15)}px`;
+        el.style.top = `${row * h + rand(-10, 10)}px`;
+        if (++col >= cols) { col = 0; row++; }
+      }
       el.style.transform = `rotate(${rand(-6, 6)}deg)`;
       el.style.zIndex = String(Math.floor(rand(1, 20)));
       el.style.transitionDelay = `${i * 50}ms`;
@@ -96,9 +106,20 @@ export default function WallPage() {
           setTimeout(() => { el.style.transitionDelay = "0ms"; }, 600);
         }));
       }
-      if (++col >= cols) { col = 0; row++; }
     });
     wall.style.height = `${row * h + 320}px`;
+  }
+
+  function loadPos(): Record<string, { x: number; y: number }> {
+    try {
+      return JSON.parse(localStorage.getItem("picwall.pos") || "{}");
+    } catch { return {}; }
+  }
+
+  function savePos(id: string, x: number, y: number) {
+    const all = loadPos();
+    all[id] = { x, y };
+    localStorage.setItem("picwall.pos", JSON.stringify(all));
   }
 
   useEffect(() => {
@@ -195,7 +216,44 @@ export default function WallPage() {
             role="button"
             aria-label={`${t("view.aria")} ${img.title}`}
             data-cuelume-press data-cuelume-hover="tick"
-            onClick={() => { setLightbox(img); play("bloom"); }}
+            onPointerDown={(e) => {
+              // desktop only; touch/mobile pass through
+              if (e.pointerType !== "mouse") return;
+              const el = e.currentTarget as HTMLElement;
+              const sx = e.clientX, sy = e.clientY;
+              const ox = el.offsetLeft, oy = el.offsetTop;
+              let dragged = false;
+              const move = (ev: PointerEvent) => {
+                const dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (!dragged && Math.hypot(dx, dy) < 6) return;
+                dragged = true;
+                el.style.left = `${ox + dx}px`;
+                el.style.top = `${oy + dy}px`;
+                el.style.zIndex = "100";
+                el.style.transition = "none";
+              };
+              const up = (ev: PointerEvent) => {
+                window.removeEventListener("pointermove", move);
+                window.removeEventListener("pointerup", up);
+                window.removeEventListener("pointercancel", up);
+                if (dragged) {
+                  // read final position with transitions disabled (else CSS snaps back)
+                  el.style.transition = "none";
+                  const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
+                  if (id) savePos(id, el.offsetLeft, el.offsetTop);
+                  el.style.transition = "";
+                  suppressClick.current = true;
+                  setTimeout(() => { suppressClick.current = false; }, 0);
+                  ev.preventDefault();
+                } else {
+                  el.style.transition = "";
+                }
+              };
+              window.addEventListener("pointermove", move);
+              window.addEventListener("pointerup", up);
+              window.addEventListener("pointercancel", up);
+            }}
+            onClick={() => { if (suppressClick.current) return; setLightbox(img); play("bloom"); }}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("bloom"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
