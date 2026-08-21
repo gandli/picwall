@@ -137,7 +137,7 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
   width: calc(100% - 16px);
   text-align: center;
   font-size: 12px;
-  color: #8a8172;
+  color: #6f675a;
   font-family: "American Typewriter", "Courier New", monospace;
   letter-spacing: .06em;
   white-space: nowrap;
@@ -148,6 +148,13 @@ header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spac
   transform: scale(1.12) rotate(0deg) translateY(-6px) !important;
   z-index: 999 !important;
   box-shadow: var(--shadow-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .polaroid:hover {
+    transform: scale(1.12) rotate(0deg) translateY(-6px) !important;
+    z-index: 999 !important;
+    box-shadow: var(--shadow-2);
+  }
 }
 
 .empty { text-align: center; padding: 90px 20px; color: var(--ink-soft); }
