@@ -51,7 +51,9 @@ jobs:
         run: node scripts/seed-e2e-fixtures.mjs
 
       - name: Create public/uploads symlink
-        run: ln -s ../uploads public/uploads
+        run: |
+          mkdir -p public
+          ln -s ../uploads public/uploads
 
       - name: E2E tests
         run: npx playwright test
