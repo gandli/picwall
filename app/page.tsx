@@ -17,13 +17,16 @@ export default function WallPage() {
   const [loaded, setLoaded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState<Img | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/images")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("加载失败"); return r.json(); })
       .then(setImages)
+      .catch((e) => setError(e.message))
       .finally(() => setLoaded(true));
   }, []);
 
@@ -91,7 +94,8 @@ export default function WallPage() {
 
       <div className="wall" ref={wallRef}>
         {!loaded && <div className="empty"><p>加载中…</p></div>}
-        {loaded && images.length === 0 && (
+        {error && <div className="empty"><p>{error}</p></div>}
+        {loaded && !error && images.length === 0 && (
           <div className="empty">
             <div className="frame">+</div>
             <p>暂无照片</p>
@@ -106,12 +110,27 @@ export default function WallPage() {
             data-title={img.title}
             data-desc={img.desc}
             tabIndex={0}
+            role="button"
+            aria-label={`查看 ${img.title}`}
+            onClick={() => setLightbox(img)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy" />
             <div className="cap">{img.title}</div>
           </div>
         ))}
       </div>
+
+      {lightbox && (
+        <div className="lightbox" onClick={() => setLightbox(null)} role="dialog" aria-modal="true">
+          <div className="lightbox-card" onClick={(e) => e.stopPropagation()}>
+            <img src={lightbox.path} alt={lightbox.title} />
+            <div className="lb-title">{lightbox.title}</div>
+            {lightbox.desc && <div className="lb-desc">{lightbox.desc}</div>}
+            <button className="lb-close" aria-label="关闭" onClick={() => setLightbox(null)}>×</button>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileRef}
