@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 type Img = {
   id: string;
@@ -13,18 +14,31 @@ type Img = {
 const rand = (a: number, b: number) => Math.random() * (b - a) + a;
 
 export default function WallPage() {
+  const { lang, setLang, t } = useI18n();
   const [images, setImages] = useState<Img[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lightbox, setLightbox] = useState<Img | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dark, setDark] = useState(false);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  function toggleTheme() {
+    const next = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("picwall.theme", next ? "dark" : "light");
+    setDark(next);
+  }
+
+  useEffect(() => {
     fetch("/api/images")
-      .then((r) => { if (!r.ok) throw new Error("加载失败"); return r.json(); })
+      .then((r) => { if (!r.ok) throw new Error(t("load.error")); return r.json(); })
       .then(setImages)
       .catch((e) => setError(e.message))
       .finally(() => setLoaded(true));
@@ -94,16 +108,28 @@ export default function WallPage() {
     >
       {dragOver && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center text-2xl text-white bg-ink/60 tracking-[.06em]">
-          松手上传
+          {t("drag.hint")}
         </div>
       )}
 
-      <header className="text-center pt-10 px-6 pb-5 max-sm:pt-7 max-sm:px-4 max-sm:pb-3">
+      <header className="text-center pt-10 px-6 pb-5 max-sm:pt-7 max-sm:px-4 max-sm:pb-3 relative">
+        <div className="absolute right-4 top-4 flex gap-2 max-sm:right-3 max-sm:top-3">
+          <button
+            aria-label={t("theme.aria")} title={t("theme.aria")}
+            onClick={toggleTheme}
+            className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
+          >{dark ? "☀️" : "🌙"}</button>
+          <button
+            aria-label={t("lang.aria")} title={t("lang.aria")}
+            onClick={() => setLang(lang === "zh" ? "en" : "zh")}
+            className="w-9 h-9 rounded-full border-none bg-card text-ink text-xs font-bold cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
+          >{lang === "zh" ? "EN" : "中"}</button>
+        </div>
         <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-2xl">
-          PicWall <span className="text-accent font-bold">photo wall</span>
+          PicWall <span className="text-accent font-bold">{t("app.subtitle")}</span>
         </h1>
         <p className="text-[13px] text-ink-soft mt-2 tracking-[.04em] dark:text-dark-soft">
-          把照片拖到页面任意位置，或点击添加
+          {t("app.tagline")}
         </p>
       </header>
 
@@ -115,8 +141,8 @@ export default function WallPage() {
             <div className="w-30 h-30 mx-auto mb-5 border-[1.5px] border-dashed border-ink/20 rounded-full flex items-center justify-center text-[34px] text-accent font-[var(--font-serif)]">
               +
             </div>
-            <p className="text-[15px]">暂无照片</p>
-            <p className="text-xs mt-2 opacity-70">拖一张照片到这里，开始你的照片墙</p>
+            <p className="text-[15px]">{t("empty.title")}</p>
+            <p className="text-xs mt-2 opacity-70">{t("empty.hint")}</p>
           </div>
         )}
         {images.map((img) => (
@@ -128,7 +154,7 @@ export default function WallPage() {
             data-desc={img.desc}
             tabIndex={0}
             role="button"
-            aria-label={`查看 ${img.title}`}
+            aria-label={`${t("view.aria")} ${img.title}`}
             onClick={() => setLightbox(img)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); } }}
           >
@@ -156,7 +182,7 @@ export default function WallPage() {
             {lightbox.desc && <div className="px-5 pb-4.5 text-[13px] text-ink-soft leading-6 dark:text-dark-soft">{lightbox.desc}</div>}
             <button
               className="absolute top-2 right-2 w-8 h-8 rounded-full border-none bg-black/45 text-white text-lg leading-none flex items-center justify-center cursor-pointer hover:bg-black/60"
-              aria-label="关闭" onClick={() => setLightbox(null)}>×</button>
+              aria-label={t("close.aria")} onClick={() => setLightbox(null)}>×</button>
           </div>
         </div>
       )}
@@ -166,18 +192,18 @@ export default function WallPage() {
         type="file"
         accept="image/*"
         multiple
-        aria-label="选择照片上传"
+        aria-label={t("upload.aria")}
         className="hidden"
         onChange={(e) => { if (e.target.files?.length) upload(e.target.files); e.target.value = ""; }}
       />
       {uploading && (
         <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] bg-card text-ink px-6 py-3 rounded-lg text-sm shadow-[var(--shadow-polaroid-hover)] dark:bg-dark-card dark:text-dark-text">
-          上传中…
+          {t("upload.loading")}
         </div>
       )}
       <button
         className="add-btn fixed right-6 bottom-6 w-12 h-12 rounded-full border-none bg-accent text-white text-2xl leading-none cursor-pointer shadow-[0_6px_20px_rgba(217,108,74,.4)] transition-transform duration-150 ease-out hover:translate-y-[-2px] hover:scale-105 hover:shadow-[0_10px_28px_rgba(217,108,74,.5)] active:scale-95 select-none z-[100]"
-        aria-label="添加照片" title="添加照片" onClick={() => fileRef.current?.click()}>+</button>
+        aria-label={t("add.aria")} title={t("add.aria")} onClick={() => fileRef.current?.click()}>+</button>
     </main>
   );
 }
