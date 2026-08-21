@@ -1,0 +1,224 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper: #f7f3ea;
+  --paper-2: #efe8da;
+  --ink: #2c2925;
+  --ink-soft: #7a7266;
+  --accent: #d96c4a;
+  --card: #fffdf8;
+  --shadow-1: 0 1px 2px rgba(70, 45, 20, .10), 0 8px 20px rgba(70, 45, 20, .12);
+  --shadow-2: 0 4px 8px rgba(70, 45, 20, .14), 0 28px 56px rgba(70, 45, 20, .26);
+}
+
+/* 纸纹噪点：固定在视口、不拦截点击 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: .5;
+  background-image: radial-gradient(rgba(0,0,0,.022) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background:
+    radial-gradient(1200px 600px at 15% -5%, #fbf7ef, transparent 60%),
+    radial-gradient(1000px 500px at 110% 15%, #f0e9da, transparent 55%),
+    var(--paper);
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+header { padding: 40px 24px 20px; text-align: center; }
+header h1 {
+  font-family: "Songti SC", "Noto Serif SC", Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink);
+}
+header h1 .en { color: var(--accent); font-style: italic; }
+header p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spacing: .04em; }
+
+/* 添加照片按钮 */
+.add-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(217,108,74,.4);
+  transition: transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s ease;
+  z-index: 100;
+}
+.add-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 10px 28px rgba(217,108,74,.5); }
+.add-btn:active { transform: scale(.95); }
+
+/* 墙 */
+.wall {
+  position: relative;
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 60vh;
+  padding: 24px 0 60px;
+}
+
+/* 拍立得卡片 */
+.polaroid {
+  position: absolute;
+  width: 220px;
+  background: var(--card);
+  padding: 10px 10px 40px;
+  border: 1px solid rgba(0,0,0,.05);
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+  transition: transform .28s cubic-bezier(.16,1,.3,1), box-shadow .28s ease;
+  transform-origin: center;
+}
+.polaroid img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  background: #e9e2d4;
+  filter: saturate(.92) contrast(1.02); /* 胶片感 */
+}
+.polaroid .cap {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: #8a8172;
+  font-family: "American Typewriter", "Courier New", monospace;
+  letter-spacing: .06em;
+}
+.polaroid:hover {
+  transform: scale(1.22) rotate(0deg) translateY(-6px) !important;
+  z-index: 999 !important;
+  box-shadow: var(--shadow-2);
+}
+
+/* 全屏拖放 overlay */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(44,41,37,.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 3px dashed rgba(255,255,255,.6);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  pointer-events: none;
+}
+.drop-overlay.show { display: flex; }
+@media (prefers-color-scheme: dark) {
+  .drop-overlay { background: rgba(0,0,0,.6); }
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 90px 20px;
+  color: var(--ink-soft);
+}
+.empty .frame {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  border: 1.5px dashed rgba(44,41,37,.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  color: var(--accent);
+  font-family: "Songti SC", serif;
+}
+.empty p { font-size: 15px; }
+.empty p.sub { font-size: 12px; margin-top: 8px; opacity: .7; }
+
+/* lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(24,20,16,.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: zoom-out;
+}
+.lightbox.show { display: flex; }
+.lightbox img {
+  max-width: 90vw;
+  max-height: 88vh;
+  border: 10px solid var(--card);
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.lightbox .meta {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,.8);
+  font-size: 13px;
+  letter-spacing: .05em;
+  font-family: "American Typewriter", "Courier New", monospace;
+}
+
+/* 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      radial-gradient(1200px 600px at 15% -5%, #242019, transparent 60%),
+      radial-gradient(1000px 500px at 110% 15%, #1e1b16, transparent 55%),
+      #1a1712;
+    color: #e8e0d0;
+  }
+  header p { color: #9a9080; }
+  header h1 { color: #efe6d6; }
+  .add-btn { background: var(--accent); }
+  .polaroid { background: #2a261f; border-color: rgba(255,255,255,.08); }
+  .polaroid .cap { color: #a89d8a; }
+  .empty { color: #9a9080; }
+  .empty .frame { border-color: rgba(255,255,255,.2); }
+  .lightbox img { border-color: #2a261f; }
+  body::before {
+    background-image: radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px);
+  }
+}
+
+/* 减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .polaroid, .add-btn { transition: none; }
+  .polaroid:hover { transform: scale(1.22) rotate(0deg) !important; }
+}
+
+@media (max-width: 640px) {
+  .wall { columns: 2; column-gap: 12px; }
+  .polaroid { position: static; width: 100%; margin-bottom: 14px; break-inside: avoid; display: inline-block; }
+  header { padding: 28px 16px 12px; }
+  header h1 { font-size: 24px; }
+}

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PicWall · photo wall</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>PicWall <span class="en">photo wall</span></h1>
+  <p>把照片拖到页面任意位置，或点击添加</p>
+</header>
+
+<div class="wall" id="wall">
+  {% if not images %}
+    <div class="empty">
+      <div class="frame">+</div>
+      <p>暂无照片</p>
+      <p class="sub">拖一张照片到这里，开始你的照片墙</p>
+    </div>
+  {% else %}
+    {% for img in images %}
+      <div class="polaroid" data-src="{{ img.path }}" data-fn="{{ img.filename }}" data-id="{{ img.id }}" data-title="{{ img.title }}" data-desc="{{ img.desc }}">
+        <img src="{{ img.path }}" alt="{{ img.filename }}" loading="lazy">
+        <div class="cap">{{ img.title }}</div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<div class="lightbox" id="box"><img id="big"><div class="meta" id="meta"></div></div>
+
+<script>
+(function(){
+  const wall = document.getElementById('wall');
+  const box  = document.getElementById('box');
+  const big  = document.getElementById('big');
+  const meta = document.getElementById('meta');
+  const rand = (a,b)=>Math.random()*(b-a)+a;
+
+  function layout(){
+    const cards = wall.querySelectorAll('.polaroid');
+    if(!cards.length) return;
+    if(window.innerWidth <= 640) return;
+    let row=0, col=0;
+    const cols=4, w=240, h=300;
+    cards.forEach((el,i)=>{
+      el.style.left = (col*w + rand(-15,15)) + 'px';
+      el.style.top  = (row*h + rand(-10,10)) + 'px';
+      el.style.transform = 'rotate('+rand(-6,6)+'deg)';
+      el.style.zIndex = Math.floor(rand(1,20));
+      // 入场动画：opacity 0→1 + 缩放
+      if(!el.dataset.entered){
+        el.style.opacity = '0';
+        el.style.transform += ' scale(.92)';
+        el.dataset.entered = '1';
+        setTimeout(()=>{
+          el.style.opacity = '1';
+          el.style.transform = 'rotate('+rand(-6,6)+'deg) scale(1)';
+        }, i*80);
+      }
+      if(++col>=cols){col=0; row++}
+    });
+    wall.style.height = (row*h+320)+'px';
+  }
+
+  layout();
+  window.addEventListener('resize', layout);
+
+  // lightbox
+  wall.addEventListener('click', e=>{
+    const card = e.target.closest('.polaroid');
+    if(!card) return;
+    big.src = card.dataset.src;
+    meta.textContent = card.dataset.title + ' · ' + card.dataset.desc;
+    box.classList.add('show');
+  });
+  box.addEventListener('click', ()=> box.classList.remove('show'));
+
+  // 上传
+  function post(files){
+    const fd = new FormData();
+    for(let f of files) fd.append('files', f);
+    if(files.length===1){
+      const fd2=new FormData(); fd2.append('file', files[0]);
+      return fetch('/upload', {method:'POST', body: fd2}).then(r=>r.json()).then(m=>{ if(!m.error) add(m); });
+    }
+    return fetch('/upload-multiple', {method:'POST', body: fd}).then(r=>r.json()).then(list=>{
+      list.forEach(m=>{ if(!m.error) add(m); });
+    });
+  }
+
+  function add(metaObj){
+    const el=document.createElement('div');
+    el.className='polaroid';
+    el.dataset.src=metaObj.path; el.dataset.fn=metaObj.filename; el.dataset.id=metaObj.id;
+    el.dataset.title=metaObj.title||metaObj.filename; el.dataset.desc=metaObj.desc||'';
+    el.innerHTML='<img src="'+metaObj.path+'" loading="lazy"><div class="cap">'+(metaObj.title||metaObj.filename.slice(0,10))+'</div>';
+    const emp = wall.querySelector('.empty'); if(emp) emp.remove();
+    wall.appendChild(el);
+    layout();
+  }
+
+  // 点击上传（小 + 按钮）
+  const file = document.createElement('input');
+  file.type = 'file'; file.accept = 'image/*'; file.multiple = true;
+  file.style.display = 'none';
+  document.body.appendChild(file);
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-btn';
+  addBtn.title = '添加照片';
+  addBtn.textContent = '+';
+  document.body.appendChild(addBtn);
+  addBtn.addEventListener('click', ()=> file.click());
+  file.addEventListener('change', ()=>{ if(file.files.length) post(file.files); file.value=''; });
+
+  // 全页拖放上传（无需上传区域）
+  const overlay = document.createElement('div');
+  overlay.className = 'drop-overlay';
+  overlay.textContent = '松开即可上传';
+  document.body.appendChild(overlay);
+  let dragDepth = 0;
+  window.addEventListener('dragenter', ev=>{
+    ev.preventDefault();
+    if(ev.dataTransfer && Array.from(ev.dataTransfer.types).includes('Files')){
+      dragDepth++;
+      overlay.classList.add('show');
+    }
+  });
+  window.addEventListener('dragover', ev=>{ ev.preventDefault(); });
+  window.addEventListener('dragleave', ev=>{
+    ev.preventDefault();
+    if(--dragDepth <= 0){ dragDepth = 0; overlay.classList.remove('show'); }
+  });
+  window.addEventListener('drop', ev=>{
+    ev.preventDefault();
+    dragDepth = 0;
+    overlay.classList.remove('show');
+    const files = ev.dataTransfer.files;
+    if(files.length) post(files);
+  });
+})();
+</script>
+</body>
+</html>
