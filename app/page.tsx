@@ -39,13 +39,17 @@ export default function WallPage() {
       el.style.top = `${row * h + rand(-10, 10)}px`;
       el.style.transform = `rotate(${rand(-6, 6)}deg)`;
       el.style.zIndex = String(Math.floor(rand(1, 20)));
+      el.style.transitionDelay = `${i * 60}ms`;
       if (!el.dataset.entered) {
-        el.style.opacity = "0";
         el.dataset.entered = "1";
-        setTimeout(() => {
+        el.style.transition = "opacity .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1)";
+        el.style.opacity = "0";
+        el.style.transform = `rotate(${rand(-6, 6)}deg) scale(.92) translateY(14px)`;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
           el.style.opacity = "1";
-          el.style.transform = `rotate(${rand(-6, 6)}deg) scale(1)`;
-        }, i * 80);
+          el.style.transform = `rotate(${rand(-6, 6)}deg) scale(1) translateY(0)`;
+          setTimeout(() => { el.style.transitionDelay = "0ms"; }, 600);
+        }));
       }
       if (++col >= cols) { col = 0; row++; }
     });
