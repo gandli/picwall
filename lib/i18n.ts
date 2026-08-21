@@ -22,6 +22,11 @@ export const DICTS: Record<Lang, Record<string, string>> = {
     "view.aria": "查看",
     "theme.aria": "切换主题",
     "lang.aria": "切换语言",
+    "delete.aria": "删除照片",
+    "delete.confirm": "删除这张照片？",
+    "delete.irreversible": "此操作不可撤销",
+    "delete.cancel": "取消",
+    "delete.error": "删除失败",
   },
   en: {
     "app.title": "PicWall",
@@ -38,6 +43,11 @@ export const DICTS: Record<Lang, Record<string, string>> = {
     "view.aria": "View",
     "theme.aria": "Toggle theme",
     "lang.aria": "Toggle language",
+    "delete.aria": "Delete photo",
+    "delete.confirm": "Delete this photo?",
+    "delete.irreversible": "This action cannot be undone",
+    "delete.cancel": "Cancel",
+    "delete.error": "Delete failed",
   },
 };
 

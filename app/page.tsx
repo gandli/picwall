@@ -24,6 +24,7 @@ export default function WallPage() {
   const [error, setError] = useState<string | null>(null);
   const [dark, setDark] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [confirmDel, setConfirmDel] = useState<Img | null>(null);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   // fixed per-card tilt (mobile): stable across re-renders/resize
@@ -50,6 +51,18 @@ export default function WallPage() {
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("picwall.theme", next ? "dark" : "light");
     setDark(next);
+  }
+
+  async function delImage(img: Img) {
+    setConfirmDel(null);
+    try {
+      const res = await fetch(`/api/images/${img.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(t("delete.error"));
+      setImages((prev) => prev.filter((m) => m.id !== img.id));
+      play("droplet");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   useEffect(() => {
@@ -173,7 +186,7 @@ export default function WallPage() {
           return (
           <div
             key={img.id}
-            className="polaroid absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block max-sm:rotate-[var(--tilt)]"
+            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block max-sm:rotate-[var(--tilt)]"
             style={{ "--tilt": `${tilts.current[i]}deg` } as React.CSSProperties}
             data-src={img.path}
             data-title={img.title}
@@ -187,6 +200,13 @@ export default function WallPage() {
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
               className="w-full h-[180px] object-cover block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10" />
+            <button
+              aria-label={t("delete.aria")}
+              title={t("delete.aria")}
+              data-cuelume-press
+              onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("press"); }}
+              className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-[rgba(26,24,18,.55)] text-white text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100"
+            >✕</button>
             <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
               {img.title}
             </div>
@@ -211,6 +231,34 @@ export default function WallPage() {
             <button
               className="absolute top-2 right-2 w-8 h-8 rounded-full border-none bg-black/45 text-white text-lg leading-none flex items-center justify-center cursor-pointer hover:bg-black/60"
               aria-label={t("close.aria")} onClick={() => { setLightbox(null); play("droplet"); }}>×</button>
+          </div>
+        </div>
+      )}
+
+      {confirmDel && (
+        <div
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-[rgba(26,24,18,.55)] backdrop-blur-[4px]"
+          onClick={() => setConfirmDel(null)} role="alertdialog" aria-modal="true"
+          onKeyDown={(e) => { if (e.key === "Escape") setConfirmDel(null); }}
+          tabIndex={-1}
+        >
+          <div
+            className="bg-card rounded-xl p-6 max-w-[320px] w-[85vw] shadow-[0_32px_64px_rgba(0,0,0,.3)] text-center dark:bg-dark-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[15px] font-semibold font-[var(--font-serif)] dark:text-dark-text">{t("delete.confirm")}</div>
+            <div className="text-[13px] text-ink-soft mt-1.5 dark:text-dark-soft">{t("delete.irreversible")}</div>
+            <div className="flex gap-2.5 mt-5">
+              <button
+                className="flex-1 h-9 rounded-full border border-black/10 text-[13px] text-ink-soft cursor-pointer hover:bg-paper-2 dark:border-white/10 dark:text-dark-soft dark:hover:bg-dark-bg"
+                onClick={() => setConfirmDel(null)}
+              >{t("delete.cancel")}</button>
+              <button
+                className="flex-1 h-9 rounded-full bg-[#c0392b] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#a93226]"
+                data-cuelume-press
+                onClick={() => delImage(confirmDel)}
+              >{t("delete.confirm")}</button>
+            </div>
           </div>
         </div>
       )}
