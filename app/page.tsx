@@ -11,6 +11,7 @@ type Img = {
   title: string;
   desc: string;
 };
+type UploadResult = Img | { error: string; filename: string };
 
 const rand = (a: number, b: number) => Math.random() * (b - a) + a;
 
@@ -137,13 +138,16 @@ export default function WallPage() {
       const fd = new FormData();
       for (const f of Array.from(files)) fd.append("files", f);
       const res = await fetch("/api/images", { method: "POST", body: fd });
-      if (!res.ok) throw new Error(`上传失败 (${res.status})`);
-      const list = await res.json();
-      setImages((prev) => [...prev, ...list.filter((m: any) => !m.error)]);
-      setError(null);
+      if (!res.ok) throw new Error(t("upload.error"));
+      const list = (await res.json()) as UploadResult[];
+      const ok = list.filter((m): m is Img => !("error" in m));
+      setImages((prev) => [...prev, ...ok]);
+      const failed = list.filter((m): m is { error: string; filename: string } => "error" in m);
+      if (failed.length) setError(`${t("upload.error")}: ${failed[0].error}`);
+      else setError(null);
       play("success");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "上传失败");
+      setError(t("upload.error"));
       play("error");
     } finally {
       setUploading(false);
@@ -180,7 +184,7 @@ export default function WallPage() {
             className="w-9 h-9 rounded-full border-none bg-card text-ink text-xs font-bold cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
           >{lang === "zh" ? "EN" : "中"}</button>
           <button
-            aria-label={soundOn ? "关闭音效" : "开启音效"} title={soundOn ? "关闭音效" : "开启音效"}
+            aria-label={soundOn ? t("sound.on.aria") : t("sound.off.aria")} title={soundOn ? t("sound.on.aria") : t("sound.off.aria")}
             onClick={toggleSound}
             className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
           >{soundOn ? "🔊" : "🔇"}</button>
@@ -216,7 +220,7 @@ export default function WallPage() {
             data-title={img.title}
             data-desc={img.desc}
             tabIndex={0}
-            role="button"
+            role="group"
             aria-label={`${t("view.aria")} ${img.title}`}
             data-cuelume-press data-cuelume-hover="tick"
             onPointerDown={(e) => {
@@ -312,6 +316,7 @@ export default function WallPage() {
             <div className="text-[13px] text-ink-soft mt-1.5 dark:text-dark-soft">{t("delete.irreversible")}</div>
             <div className="flex gap-2.5 mt-5">
               <button
+                autoFocus
                 className="flex-1 h-9 rounded-full border border-black/10 text-[13px] text-ink-soft cursor-pointer hover:bg-paper-2 dark:border-white/10 dark:text-dark-soft dark:hover:bg-dark-bg"
                 onClick={() => { setConfirmDel(null); play("press"); }}
               >{t("delete.cancel")}</button>
