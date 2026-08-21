@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import { bind, play, setEnabled } from "cuelume";
 
 type Img = {
   id: string;
@@ -22,12 +23,25 @@ export default function WallPage() {
   const [lightbox, setLightbox] = useState<Img | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dark, setDark] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
+    // sound prefs + wire up data-cuelume-* attributes
+    const savedSound = localStorage.getItem("picwall.sound") !== "off";
+    setSoundOn(savedSound);
+    setEnabled(savedSound);
+    bind();
   }, []);
+
+  function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(next);
+    setEnabled(next);
+    localStorage.setItem("picwall.sound", next ? "on" : "off");
+  }
 
   function toggleTheme() {
     const next = !document.documentElement.classList.contains("dark");
@@ -88,8 +102,10 @@ export default function WallPage() {
       const list = await res.json();
       setImages((prev) => [...prev, ...list.filter((m: any) => !m.error)]);
       setError(null);
+      play("success");
     } catch (e) {
       setError(e instanceof Error ? e.message : "上传失败");
+      play("error");
     } finally {
       setUploading(false);
     }
@@ -124,6 +140,11 @@ export default function WallPage() {
             onClick={() => setLang(lang === "zh" ? "en" : "zh")}
             className="w-9 h-9 rounded-full border-none bg-card text-ink text-xs font-bold cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
           >{lang === "zh" ? "EN" : "中"}</button>
+          <button
+            aria-label={soundOn ? "关闭音效" : "开启音效"} title={soundOn ? "关闭音效" : "开启音效"}
+            onClick={toggleSound}
+            className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
+          >{soundOn ? "🔊" : "🔇"}</button>
         </div>
         <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-2xl">
           PicWall <span className="text-accent font-bold">{t("app.subtitle")}</span>
@@ -155,8 +176,9 @@ export default function WallPage() {
             tabIndex={0}
             role="button"
             aria-label={`${t("view.aria")} ${img.title}`}
-            onClick={() => setLightbox(img)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); } }}
+            data-cuelume-press data-cuelume-hover="tick"
+            onClick={() => { setLightbox(img); play("bloom"); }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("bloom"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
               className="w-full h-[180px] object-cover block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10" />
@@ -170,8 +192,8 @@ export default function WallPage() {
       {lightbox && (
         <div
           className="fixed inset-0 z-[500] flex items-center justify-center bg-[rgba(26,24,18,.7)] backdrop-blur-[6px] cursor-pointer dark:bg-[rgba(0,0,0,.75)]"
-          onClick={() => setLightbox(null)} role="dialog" aria-modal="true"
-          onKeyDown={(e) => { if (e.key === "Escape") setLightbox(null); }}
+          onClick={() => { setLightbox(null); play("droplet"); }} role="dialog" aria-modal="true"
+          onKeyDown={(e) => { if (e.key === "Escape") { setLightbox(null); play("droplet"); } }}
           tabIndex={-1}
           ref={(el) => el?.focus()}
         >
@@ -182,7 +204,7 @@ export default function WallPage() {
             {lightbox.desc && <div className="px-5 pb-4.5 text-[13px] text-ink-soft leading-6 dark:text-dark-soft">{lightbox.desc}</div>}
             <button
               className="absolute top-2 right-2 w-8 h-8 rounded-full border-none bg-black/45 text-white text-lg leading-none flex items-center justify-center cursor-pointer hover:bg-black/60"
-              aria-label={t("close.aria")} onClick={() => setLightbox(null)}>×</button>
+              aria-label={t("close.aria")} onClick={() => { setLightbox(null); play("droplet"); }}>×</button>
           </div>
         </div>
       )}
