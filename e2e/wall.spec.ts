@@ -75,3 +75,37 @@ test("键盘 Enter 聚焦卡片打开 lightbox", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
 });
+
+test("卡片 × 按钮打开确认框，确认后删除卡片", async ({ page }) => {
+  // upload a fresh card to delete
+  await page.setInputFiles('input[type="file"]', {
+    name: UPLOAD_NAME,
+    mimeType: "image/png",
+    buffer: PNG,
+  });
+  const card = page.locator(".polaroid", { hasText: UPLOAD_TITLE });
+  await expect(card).toBeVisible();
+
+  // hover shows × on desktop (always visible on mobile); click it
+  await card.hover();
+  await card.getByRole("button", { name: "删除照片" }).click();
+
+  const alert = page.getByRole("alertdialog");
+  await expect(alert).toBeVisible();
+  await expect(alert).toHaveText(/删除这张照片/);
+
+  // cancel first — card stays
+  await alert.getByRole("button", { name: "取消" }).click();
+  await expect(alert).toBeHidden();
+  await expect(card).toBeVisible();
+
+  // confirm — card disappears
+  await card.hover();
+  await card.getByRole("button", { name: "删除照片" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "删除这张照片？" }).click();
+  await expect(card).toBeHidden();
+
+  // manifest back to baseline
+  await page.reload();
+  await expect(page.locator(".polaroid")).toHaveCount(5);
+});
