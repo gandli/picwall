@@ -301,7 +301,7 @@ export default function WallPage() {
               title={t("delete.aria")}
               data-cuelume-press
               onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("toggle"); }}
-              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/85 border border-black/15 text-ink-soft text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px] max-sm:opacity-100 dark:bg-black/45 dark:border-white/20 dark:text-white/75"
+              className="absolute top-1 right-1 w-5 h-5 -m-3 p-3 text-ink-soft/70 text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:text-ink max-sm:opacity-100 dark:text-white/60 dark:hover:text-white"
             >✕</button>
             <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-ink-soft font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
               {img.title}
