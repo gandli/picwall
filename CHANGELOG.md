@@ -6,6 +6,11 @@ All notable changes to PicWall are documented here. Format follows
 
 ## [Unreleased]
 
+### Fixed
+- fix(changelog): tolerate PR-less commit ranges + match ImgBot rows (#47)
+
+## [Unreleased]
+
 ### Added
 - [ImgBot] Optimize images (#29)
 - feat: local in-browser image captioning (EN caption + ZH translate) (#30)
