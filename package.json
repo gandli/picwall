@@ -1,6 +1,8 @@
 {
   "name": "picwall",
   "version": "0.2.0",
+  "description": "Local-first photo wall \u2014 polaroid gallery with drag-and-drop uploads, masonry layout and fully in-browser AI image captioning. Zero DB.",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev",
