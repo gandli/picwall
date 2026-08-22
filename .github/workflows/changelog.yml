@@ -1,0 +1,78 @@
+# Auto-update CHANGELOG.md from merged PRs.
+# Runs after changes land on main: groups new PRs since the last changelog
+# commit by type (feat/fix/style/docs/ci/chore), prepends an "Unreleased"
+# section, opens/updates a PR. Version bumps + release dates stay manual.
+name: Changelog
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: changelog-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: prepend Unreleased section
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.4.0
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+
+      - name: Collect merged PRs since last changelog touch
+        id: collect
+        run: |
+          set -euo pipefail
+          LAST=$(git log -1 --format=%H -- CHANGELOG.md)
+          echo "last changelog commit: $LAST"
+
+          git log "$LAST..HEAD" --format='%H %s' | grep -E '\(#[0-9]+\)$' | while read -r sha subject; do
+            num=$(echo "$subject" | grep -o '#[0-9]*' | tr -d '#')
+            api=$(gh api "repos/${{ github.repository }}/pulls/$num" --jq '{title:.title, labels:[.labels[].name]}')
+            title=$(echo "$api" | python3 -c 'import json,sys; print(json.load(sys.stdin)["title"])')
+            labels=$(echo "$api" | python3 -c 'import json,sys; print(",".join(json.load(sys.stdin)["labels"]))')
+            type=Added   # default bucket
+            case "$(echo "$subject" | cut -d: -f1)" in
+              feat*)    type=Added ;;
+              fix*)     type=Fixed ;;
+              style*|refactor*|perf*) type=Changed ;;
+              docs*)    type="Documentation" ;;
+              ci*|chore*|test*)       type=Maintenance ;;
+            esac
+            printf '%s\t%s\t%s\t%s\n' "$type" "$num" "$title" "$labels"
+          done | sort -u > /tmp/pr-rows.txt
+
+          # skip bots (ImgBot etc.) and rows already covered
+          grep -v $'\tOptimize images' /tmp/pr-rows.txt > /tmp/pr-rows-clean.txt || true
+          COUNT=$(wc -l < /tmp/pr-rows-clean.txt | tr -d ' ')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          cat /tmp/pr-rows-clean.txt
+
+          node scripts/render-changelog.mjs /tmp/pr-rows-clean.txt
+
+      - name: Open/update changelog PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/changelog-sync
+          add-paths: CHANGELOG.md
+          delete-branch: true
+          title: "docs: update CHANGELOG (Unreleased)"
+          commit-message: "docs: update CHANGELOG (Unreleased)"
+          labels: documentation
+          body: |
+            自动从已合并 PR 生成的 Unreleased 段落。
+
+            - 触发: main 分支 ${{ github.sha }} 落地后由 Changelog workflow 更新
+            - 运行记录: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
