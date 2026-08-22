@@ -78,6 +78,14 @@ describe("captionImage", () => {
   });
 });
 
+
+  it("标题分句吞掉整句时回退到原句", async () => {
+    // "，，" — replace strips from first punctuation, leaving empty → falls back to full zh
+    fakePipelines("en", "，，");
+    const r = await vision.captionImage({ path: "/uploads/x.jpg" });
+    expect(r!.title).toBe("，，".slice(0, 16));
+  });
+
 describe("visionSupported", () => {
   it("node 环境（无 window）返回 false", () => {
     expect(vision.visionSupported()).toBe(false);
