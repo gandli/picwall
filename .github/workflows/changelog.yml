@@ -33,6 +33,8 @@ jobs:
 
       - name: Collect merged PRs since last changelog touch
         id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           LAST=$(git log -1 --format=%H -- CHANGELOG.md)
