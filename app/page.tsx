@@ -90,31 +90,35 @@ export default function WallPage() {
     const saved = loadPos();
     const isMobile = window.innerWidth <= 640;
     // masonry: track tallest column, shortest column gets next card
-    const cols = isMobile ? 2 : 4, w = isMobile ? Math.floor(wall.clientWidth / 2) : 240;
+    const cols = isMobile ? 2 : 4;
+    const w = isMobile ? Math.floor(wall.clientWidth / 2) : 240;
     const colH = new Array(cols).fill(0);
     cards.forEach((el, i) => {
       const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
       const sp = id ? saved[id] : undefined;
       if (sp) {
-        el.style.left = `${sp.x}px`;
-        el.style.top = `${sp.y}px`;
+        // clamp stale/out-of-bounds saves (e.g. desktop coords on phone)
+        const maxX = Math.max(0, wall.clientWidth - el.offsetWidth);
+        el.style.left = `${Math.min(Math.max(0, sp.x), maxX)}px`;
+        el.style.top = `${Math.max(0, sp.y)}px`;
       } else {
         // shortest column wins
         const c = colH.indexOf(Math.min(...colH));
-        el.style.left = `${c * w + rand(-15, 15)}px`;
-        el.style.top = `${colH[c] + rand(-10, 10)}px`;
-        colH[c] += el.offsetHeight + 20;
+        // mobile: no rotation — upright cards keep bbox == card, columns stay clean
+        el.style.left = `${c * w}px`;
+        el.style.top = `${colH[c]}px`;
+        colH[c] += el.offsetHeight + (isMobile ? 24 : 20);
       }
-      el.style.transform = `rotate(${rand(-6, 6)}deg)`;
+      el.style.transform = isMobile ? "none" : `rotate(${rand(-6, 6)}deg)`;
       el.style.zIndex = String(Math.floor(rand(1, 20)));
       el.style.transitionDelay = `${i * 50}ms`;
       if (!el.dataset.entered) {
         el.dataset.entered = "1";
         el.style.opacity = "0";
-        el.style.transform = `rotate(${rand(-6, 6)}deg) scale(.92) translateY(14px)`;
+        el.style.transform = isMobile ? "scale(.92) translateY(14px)" : `rotate(${rand(-6, 6)}deg) scale(.92) translateY(14px)`;
         requestAnimationFrame(() => requestAnimationFrame(() => {
           el.style.opacity = "1";
-          el.style.transform = `rotate(${rand(-6, 6)}deg) scale(1) translateY(0)`;
+          el.style.transform = isMobile ? "scale(1) translateY(0)" : `rotate(${rand(-6, 6)}deg) scale(1) translateY(0)`;
           setTimeout(() => { el.style.transitionDelay = "0ms"; }, 600);
         }));
       }
@@ -122,16 +126,20 @@ export default function WallPage() {
     wall.style.height = `${Math.max(...colH) + 320}px`;
   }
 
+  // positions are per-device: desktop coords are meaningless on a narrow screen
+  function posKey() {
+    return window.innerWidth <= 640 ? "picwall.pos.m" : "picwall.pos.d";
+  }
   function loadPos(): Record<string, { x: number; y: number }> {
     try {
-      return JSON.parse(localStorage.getItem("picwall.pos") || "{}");
+      return JSON.parse(localStorage.getItem(posKey()) || "{}");
     } catch { return {}; }
   }
 
   function savePos(id: string, x: number, y: number) {
     const all = loadPos();
     all[id] = { x, y };
-    localStorage.setItem("picwall.pos", JSON.stringify(all));
+    localStorage.setItem(posKey(), JSON.stringify(all));
   }
 
   useEffect(() => {
@@ -245,7 +253,7 @@ export default function WallPage() {
           return (
           <div
             key={img.id}
-            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer overflow-hidden select-none [touch-action:pan-y] [-webkit-touch-callout:none] max-sm:w-[calc(50%-10px)] max-sm:m-0 max-sm:mb-2 max-sm:rotate-[var(--tilt)]"
+            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer overflow-hidden select-none [touch-action:pan-y] [-webkit-touch-callout:none] max-sm:w-[calc(50%-10px)] max-sm:m-0"
             style={{ "--tilt": `${tilts.current[i]}deg` } as React.CSSProperties}
             data-idx={i}
             data-src={img.path}
