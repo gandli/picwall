@@ -260,9 +260,10 @@ export default function WallPage() {
               const sx = e.clientX, sy = e.clientY;
               const ox = el.offsetLeft, oy = el.offsetTop;
               const isTouch = e.pointerType !== "mouse";
-              let dragged = false, axis: "x" | "y" | null = null;
+              let dragged = false, axis: "x" | "y" | null = null, lastDx = 0, lastDy = 0;
               const move = (ev: PointerEvent) => {
                 const dx = ev.clientX - sx, dy = ev.clientY - sy;
+                lastDx = dx; lastDy = dy;
                 if (!axis) {
                   if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
                   axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
@@ -287,16 +288,18 @@ export default function WallPage() {
                 window.removeEventListener("pointermove", move);
                 window.removeEventListener("pointerup", up);
                 window.removeEventListener("pointercancel", up);
-                const dx = ev.clientX - sx, dy = ev.clientY - sy;
-                if (axis === "x" && isTouch) {
-                  // swipe left past threshold → confirm delete
+                // touchEnd carries no coordinates — use last move delta
+                const dx = lastDx, dy = lastDy;
+                // pure horizontal swipe (|dy| < 12): left = delete, right = move
+                // diagonal / vertical = reposition drag
+                const isSwipe = isTouch && axis === "x" && Math.abs(dy) < 12;
+                if (isSwipe) {
                   if (dx < -60) {
                     setConfirmDel(img);
                     play("toggle");
                     el.style.transition = "";
                     el.style.left = `${ox}px`;
                   } else if (dx > 60) {
-                    // swipe right = reposition (save new x)
                     el.style.transition = "";
                     const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
                     if (id) savePos(id, el.offsetLeft, el.offsetTop);
