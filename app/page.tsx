@@ -260,7 +260,7 @@ export default function WallPage() {
               const sx = e.clientX, sy = e.clientY;
               const ox = el.offsetLeft, oy = el.offsetTop;
               const isTouch = e.pointerType !== "mouse";
-              let dragged = false, axis: "x" | "y" | null = null, lastDx = 0, lastDy = 0;
+              let dragged = false, axis: "x" | "y" | null = null, freeDrag = false, lastDx = 0, lastDy = 0;
               const move = (ev: PointerEvent) => {
                 const dx = ev.clientX - sx, dy = ev.clientY - sy;
                 lastDx = dx; lastDy = dy;
@@ -268,18 +268,17 @@ export default function WallPage() {
                   if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
                   axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
                 }
+                // horizontal-ish but vertical component grows → upgrade to free drag
+                if (axis === "x" && !freeDrag && Math.abs(dy) >= 12) freeDrag = true;
                 if (isTouch && axis === "y") return; // vertical swipe = scroll, not drag
                 if (!dragged) {
                   dragged = true;
                   el.style.transition = "none";
                 }
-                if (axis === "x") {
-                  // horizontal: drag card sideways (left = reveal delete, right = move)
-                  el.style.left = `${ox + dx}px`;
-                  const idx = Number(el.dataset.idx ?? 0);
-                  el.style.transform = `rotate(${tilts.current[idx] ?? 0}deg)`;
+                el.style.left = `${ox + dx}px`;
+                if (axis === "x" && !freeDrag) {
+                  // pure horizontal: swipe-follow (delete reveal), keep tilt
                 } else {
-                  el.style.left = `${ox + dx}px`;
                   el.style.top = `${oy + dy}px`;
                 }
                 el.style.zIndex = "100";
@@ -290,9 +289,9 @@ export default function WallPage() {
                 window.removeEventListener("pointercancel", up);
                 // touchEnd carries no coordinates — use last move delta
                 const dx = lastDx, dy = lastDy;
-                // pure horizontal swipe (|dy| < 12): left = delete, right = move
+                // pure horizontal swipe (no vertical component): left = delete, right = move
                 // diagonal / vertical = reposition drag
-                const isSwipe = isTouch && axis === "x" && Math.abs(dy) < 12;
+                const isSwipe = isTouch && axis === "x" && !freeDrag && Math.abs(dy) < 12;
                 if (isSwipe) {
                   if (dx < -60) {
                     setConfirmDel(img);
