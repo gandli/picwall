@@ -109,7 +109,7 @@ await page.waitForFunction(
     return cards.some((c) => /[\u4e00-\u9fff]/.test(c.textContent));
   },
   undefined,
-  { timeout: 120_000 },
+  { timeout: 300_000 }, // cold CI cache: first model download ~330MB can be slow
 );
 await page.mouse.move(10, 10); // drop hover so no card is mid-lift
 await page.waitForTimeout(500);
