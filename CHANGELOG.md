@@ -4,6 +4,36 @@ All notable changes to PicWall are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning follows
 [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- [ImgBot] Optimize images (#29)
+- feat: local in-browser image captioning (EN caption + ZH translate) (#30)
+- [ImgBot] Optimize images (#34)
+- feat: caption progress indicator on photo cards (#37)
+- e2e: statement coverage gate at 100% for UI surface (#39)
+
+### Changed
+- style: Scandinavian redesign — neutral black-and-white system (#40)
+
+### Fixed
+- fix: hovered card floating above lightbox overlay (#32)
+- fix: bump sharp to 0.35.x via override (GHSA-f88m-g3jw-g9cj) (#38)
+
+### Documentation
+- docs(readme): refresh — badges, accurate stack, governance links, fresh showcase (#28)
+- docs: user manual chapter for AI image captioning (#33)
+
+### Maintenance
+- chore(deps): bump actions/checkout from 4.2.2 to 4.4.0 (#25)
+- chore(deps-dev): bump @types/node from 20.17.6 to 20.19.43 in the dev-tooling group (#27)
+- test: unit tests for vision captioning module (#31)
+- test: widen coverage scope to lib/ and close all gaps (#35)
+- chore: add description and MIT license to package.json (#36)
+- ci: auto-regenerate user-manual screenshots via Docs workflow (#41)
+- ci: auto-update CHANGELOG from merged PRs (#42)
+- fix(changelog): provide GH_TOKEN to collect step (#45)
+
 ## [0.2.0] - 2026-08-21
 
 ### Added
