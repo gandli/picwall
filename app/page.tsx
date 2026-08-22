@@ -86,10 +86,11 @@ export default function WallPage() {
     const wall = wallRef.current;
     if (!wall) return;
     const cards = wall.querySelectorAll<HTMLElement>(".polaroid");
-    if (!cards.length || window.innerWidth <= 640) return;
+    if (!cards.length) return;
     const saved = loadPos();
-    const cols = 4, w = 240;
+    const isMobile = window.innerWidth <= 640;
     // masonry: track tallest column, shortest column gets next card
+    const cols = isMobile ? 2 : 4, w = isMobile ? Math.floor(wall.clientWidth / 2) : 240;
     const colH = new Array(cols).fill(0);
     cards.forEach((el, i) => {
       const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
@@ -227,7 +228,7 @@ export default function WallPage() {
         </p>
       </header>
 
-      <div className="wall relative w-[90%] max-w-[1200px] mx-auto min-h-[60vh] py-6 pb-15 max-sm:columns-2 max-sm:gap-3" ref={wallRef}>
+      <div className="wall relative w-[90%] max-w-[1200px] mx-auto min-h-[60vh] py-6 pb-15" ref={wallRef}>
         {!loaded && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>加载中…</p></div>}
         {error && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>{error}</p></div>}
         {loaded && !error && images.length === 0 && (
@@ -244,8 +245,9 @@ export default function WallPage() {
           return (
           <div
             key={img.id}
-            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block max-sm:rotate-[var(--tilt)]"
+            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer overflow-hidden max-sm:w-[calc(50%-10px)] max-sm:m-0 max-sm:mb-2 max-sm:rotate-[var(--tilt)]"
             style={{ "--tilt": `${tilts.current[i]}deg` } as React.CSSProperties}
+            data-idx={i}
             data-src={img.path}
             data-title={img.title}
             data-desc={img.desc}
@@ -254,31 +256,62 @@ export default function WallPage() {
             aria-label={`${t("view.aria")} ${img.title}`}
             data-cuelume-press data-cuelume-hover="tick"
             onPointerDown={(e) => {
-              // desktop only; touch/mobile pass through
-              if (e.pointerType !== "mouse") return;
               const el = e.currentTarget as HTMLElement;
               const sx = e.clientX, sy = e.clientY;
               const ox = el.offsetLeft, oy = el.offsetTop;
-              let dragged = false;
+              const isTouch = e.pointerType !== "mouse";
+              let dragged = false, axis: "x" | "y" | null = null;
               const move = (ev: PointerEvent) => {
                 const dx = ev.clientX - sx, dy = ev.clientY - sy;
-                if (!dragged && Math.hypot(dx, dy) < 6) return;
-                dragged = true;
-                el.style.left = `${ox + dx}px`;
-                el.style.top = `${oy + dy}px`;
+                if (!axis) {
+                  if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                  axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+                }
+                if (isTouch && axis === "y") return; // vertical swipe = scroll, not drag
+                if (!dragged) {
+                  dragged = true;
+                  el.style.transition = "none";
+                }
+                if (axis === "x") {
+                  // horizontal: drag card sideways (left = reveal delete, right = move)
+                  el.style.left = `${ox + dx}px`;
+                  const idx = Number(el.dataset.idx ?? 0);
+                  el.style.transform = `rotate(${tilts.current[idx] ?? 0}deg)`;
+                } else {
+                  el.style.left = `${ox + dx}px`;
+                  el.style.top = `${oy + dy}px`;
+                }
                 el.style.zIndex = "100";
-                el.style.transition = "none";
               };
               const up = (ev: PointerEvent) => {
                 window.removeEventListener("pointermove", move);
                 window.removeEventListener("pointerup", up);
                 window.removeEventListener("pointercancel", up);
-                if (dragged) {
-                  // read final position with transitions disabled (else CSS snaps back)
-                  el.style.transition = "none";
+                const dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (axis === "x" && isTouch) {
+                  // swipe left past threshold → confirm delete
+                  if (dx < -60) {
+                    setConfirmDel(img);
+                    play("toggle");
+                    el.style.transition = "";
+                    el.style.left = `${ox}px`;
+                  } else if (dx > 60) {
+                    // swipe right = reposition (save new x)
+                    el.style.transition = "";
+                    const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
+                    if (id) savePos(id, el.offsetLeft, el.offsetTop);
+                    suppressClick.current = true;
+                    setTimeout(() => { suppressClick.current = false; }, 0);
+                  } else {
+                    el.style.transition = "";
+                    el.style.left = `${ox}px`;
+                    suppressClick.current = true;
+                    setTimeout(() => { suppressClick.current = false; }, 0);
+                  }
+                } else if (dragged) {
+                  el.style.transition = "";
                   const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
                   if (id) savePos(id, el.offsetLeft, el.offsetTop);
-                  el.style.transition = "";
                   suppressClick.current = true;
                   setTimeout(() => { suppressClick.current = false; }, 0);
                   ev.preventDefault();
@@ -301,7 +334,7 @@ export default function WallPage() {
               title={t("delete.aria")}
               data-cuelume-press
               onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("toggle"); }}
-              className="absolute top-1 right-1 w-5 h-5 -m-3 p-3 text-ink-soft/70 text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:text-ink max-sm:opacity-100 dark:text-white/60 dark:hover:text-white"
+              className="absolute top-1 right-1 w-5 h-5 -m-3 p-3 text-ink-soft/70 text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:text-ink max-sm:hidden dark:text-white/60 dark:hover:text-white"
             >✕</button>
             <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-ink-soft font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
               {img.title}
