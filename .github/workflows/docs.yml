@@ -1,0 +1,91 @@
+# Regenerate the user manual (docs/guide/) from the live app.
+# Test + build gating lives in ci.yml; this workflow keeps the manual in sync
+# after changes land on main — screenshots recaptured by driving the real app,
+# diffs become a PR (never pushed straight to main).
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "lib/**"
+      - "docs/guide/capture.mjs"
+      - "scripts/seed-e2e-fixtures.mjs"
+      - "package-lock.json"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  manual:
+    name: regenerate manual screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.4.0
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # CJK UI text renders as tofu on bare ubuntu runners — the manual is Chinese
+      - name: Install CJK fonts
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Seed fixture images + manifest
+        run: node scripts/seed-e2e-fixtures.mjs
+
+      - name: Create public/uploads symlink
+        run: |
+          mkdir -p public
+          ln -s ../uploads public/uploads
+
+      - name: Restore caption-model cache (browser profile)
+        uses: actions/cache@v4.2.0
+        with:
+          path: /tmp/picwall-guide-profile
+          key: picwall-guide-profile-v1
+
+      # capture.mjs expects the dev server on :3000; first AI caption downloads
+      # the local wasm models (~330MB from huggingface.co) inside the browser,
+      # hence the generous overall timeout
+      - name: Start app + capture screenshots
+        run: |
+          npm run dev &
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:3000 >/dev/null && break
+            sleep 2
+          done
+          curl -sf http://localhost:3000 >/dev/null || { echo "app failed to start" >&2; exit 1; }
+          node docs/guide/capture.mjs
+
+      - name: Open/update manual sync PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: docs/manual-sync
+          add-paths: docs/guide/screenshots/**
+          delete-branch: true
+          title: "docs: refresh user-manual screenshots"
+          commit-message: "docs: refresh user-manual screenshots"
+          labels: documentation
+          body: |
+            自动重新生成的使用手册截图。
+
+            - 触发: main 分支 ${{ github.sha }} 落地后由 Docs workflow 驱动真实应用重拍
+            - 运行记录: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - 截图无变化时本 PR 会自动关闭/跳过
