@@ -37,6 +37,13 @@ export async function captionImage(
   img: Pick<ImageMeta, "path">,
 ): Promise<{ title: string; desc: string } | null> {
   try {
+    // E2E test seam (?e2eVision=1): deterministic caption without model load.
+    // Prod never passes the param; the real pipeline below is unchanged.
+    /* v8 ignore next -- covered by Playwright E2E, not vitest */
+    if (typeof window !== "undefined" && window.location.search.includes("e2eVision=1")) {
+      await new Promise((r) => setTimeout(r, 300));
+      return { title: "测试照片", desc: "这是端到端测试生成的描述" };
+    }
     const t = await import("@huggingface/transformers");
     capper ??= await loadCaptioner();
     translator ??= await loadTranslator();
