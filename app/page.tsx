@@ -304,7 +304,8 @@ export default function WallPage() {
               className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-[rgba(26,24,18,.55)] text-white text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100"
             >✕</button>
             <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
-              {captioning.has(img.id) ? t("caption.loading") : img.title}
+              {img.title}
+              {captioning.has(img.id) && <span className="text-accent"> · {t("caption.loading")}</span>}
             </div>
             {captioning.has(img.id) && firstRun.current === false && (
               <div className="absolute bottom-8 left-2 right-2 text-center text-[10px] leading-tight text-[#9a9184] dark:text-dark-soft">
