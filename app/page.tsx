@@ -196,7 +196,7 @@ export default function WallPage() {
       }}
     >
       {dragOver && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center text-2xl text-white bg-ink/60 tracking-[.06em]">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center text-2xl text-white bg-ink/80 tracking-[.06em]">
           {t("drag.hint")}
         </div>
       )}
@@ -206,21 +206,21 @@ export default function WallPage() {
           <button
             aria-label={t("theme.aria")} title={t("theme.aria")}
             onClick={toggleTheme}
-            className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
-          >{dark ? "☀️" : "🌙"}</button>
+            className="w-9 h-9 rounded-full border border-black/10 bg-white text-ink text-sm cursor-pointer hover:bg-paper-2 dark:border-white/15 dark:bg-dark-card dark:text-dark-text dark:hover:bg-dark-bg"
+          >{dark ? "◐" : "○"}</button>
           <button
             aria-label={t("lang.aria")} title={t("lang.aria")}
             onClick={() => setLang(lang === "zh" ? "en" : "zh")}
-            className="w-9 h-9 rounded-full border-none bg-card text-ink text-xs font-bold cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
+            className="w-9 h-9 rounded-full border border-black/10 bg-white text-ink text-xs font-medium cursor-pointer hover:bg-paper-2 dark:border-white/15 dark:bg-dark-card dark:text-dark-text dark:hover:bg-dark-bg"
           >{lang === "zh" ? "EN" : "中"}</button>
           <button
             aria-label={soundOn ? t("sound.on.aria") : t("sound.off.aria")} title={soundOn ? t("sound.on.aria") : t("sound.off.aria")}
             onClick={toggleSound}
-            className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
-          >{soundOn ? "🔊" : "🔇"}</button>
+            className="w-9 h-9 rounded-full border border-black/10 bg-white text-ink text-sm cursor-pointer hover:bg-paper-2 dark:border-white/15 dark:bg-dark-card dark:text-dark-text dark:hover:bg-dark-bg"
+          >{soundOn ? "◁" : "▷"}</button>
         </div>
         <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-xl max-sm:pr-20 max-sm:leading-[1.15]">
-          PicWall <span className="text-accent font-bold">{t("app.subtitle")}</span>
+          PicWall <span className="font-bold">{t("app.subtitle")}</span>
         </h1>
         <p className="text-[13px] text-ink-soft mt-2 tracking-[.04em] dark:text-dark-soft max-sm:text-[12px] max-sm:pr-20">
           {t("app.tagline")}
@@ -232,7 +232,7 @@ export default function WallPage() {
         {error && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>{error}</p></div>}
         {loaded && !error && images.length === 0 && (
           <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft">
-            <div className="w-30 h-30 mx-auto mb-5 border-[1.5px] border-dashed border-ink/20 rounded-full flex items-center justify-center text-[34px] text-accent font-[var(--font-serif)]">
+            <div className="w-30 h-30 mx-auto mb-5 border-[1.5px] border-dashed border-ink/20 rounded-full flex items-center justify-center text-[34px] font-[var(--font-serif)]">
               +
             </div>
             <p className="text-[15px]">{t("empty.title")}</p>
@@ -294,21 +294,21 @@ export default function WallPage() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("arrival"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
-              className="w-full h-auto block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10"
+              className="w-full h-auto block bg-paper-2 outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10"
               onLoad={() => layout()} />
             <button
               aria-label={t("delete.aria")}
               title={t("delete.aria")}
               data-cuelume-press
               onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("toggle"); }}
-              className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-[rgba(26,24,18,.55)] text-white text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100"
+              className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/55 text-white text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100"
             >✕</button>
-            <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
+            <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-ink-soft font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
               {img.title}
-              {captioning.has(img.id) && <span className="text-accent"> · {t("caption.loading")}</span>}
+              {captioning.has(img.id) && <span> · {t("caption.loading")}</span>}
             </div>
             {captioning.has(img.id) && firstRun.current === false && (
-              <div className="absolute bottom-8 left-2 right-2 text-center text-[10px] leading-tight text-[#9a9184] dark:text-dark-soft">
+              <div className="absolute bottom-8 left-2 right-2 text-center text-[10px] leading-tight text-ink-soft/70 dark:text-dark-soft">
                 {t("caption.first")}
               </div>
             )}
@@ -319,13 +319,13 @@ export default function WallPage() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-[500] flex items-center justify-center bg-[rgba(26,24,18,.7)] backdrop-blur-[6px] cursor-pointer dark:bg-[rgba(0,0,0,.75)]"
+          className="fixed inset-0 z-[500] flex items-center justify-center bg-black/70 backdrop-blur-[6px] cursor-pointer dark:bg-black/75"
           onClick={() => { setLightbox(null); play("page"); }} role="dialog" aria-modal="true"
           onKeyDown={(e) => { if (e.key === "Escape") { setLightbox(null); play("page"); } }}
           tabIndex={-1}
           ref={(el) => el?.focus()}
         >
-          <div className="bg-card rounded-xl max-w-[90vw] max-h-[85vh] overflow-auto cursor-default shadow-[0_0_0_1px_rgba(0,0,0,.06),0_32px_64px_rgba(0,0,0,.3)] relative dark:bg-dark-card"
+          <div className="bg-card rounded-lg max-w-[90vw] max-h-[85vh] overflow-auto cursor-default shadow-[0_0_0_1px_rgba(0,0,0,.08),0_32px_64px_rgba(0,0,0,.3)] relative dark:bg-dark-card"
             onClick={(e) => e.stopPropagation()}>
             <img src={lightbox.path} alt={lightbox.title} className="block max-w-[90vw] max-h-[70vh] object-contain" />
             <div className="pt-3.5 px-5 pb-1 text-[17px] font-semibold font-[var(--font-serif)] dark:text-dark-text">{lightbox.title}</div>
@@ -339,13 +339,13 @@ export default function WallPage() {
 
       {confirmDel && (
         <div
-          className="fixed inset-0 z-[600] flex items-center justify-center bg-[rgba(26,24,18,.55)] backdrop-blur-[4px]"
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 backdrop-blur-[4px]"
           onClick={() => { setConfirmDel(null); play("press"); }} role="alertdialog" aria-modal="true"
           onKeyDown={(e) => { if (e.key === "Escape") { setConfirmDel(null); play("press"); } }}
           tabIndex={-1}
         >
           <div
-            className="bg-card rounded-xl p-6 max-w-[320px] w-[85vw] shadow-[0_32px_64px_rgba(0,0,0,.3)] text-center dark:bg-dark-card"
+            className="bg-card rounded-lg p-6 max-w-[320px] w-[85vw] shadow-[0_32px_64px_rgba(0,0,0,.3)] text-center dark:bg-dark-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-[15px] font-semibold font-[var(--font-serif)] dark:text-dark-text">{t("delete.confirm")}</div>
@@ -357,7 +357,7 @@ export default function WallPage() {
                 onClick={() => { setConfirmDel(null); play("press"); }}
               >{t("delete.cancel")}</button>
               <button
-                className="flex-1 h-9 rounded-full bg-[#c0392b] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#a93226]"
+                className="flex-1 h-9 rounded-full bg-black text-white text-[13px] font-medium cursor-pointer hover:bg-black/80"
                 onClick={() => { play("pulse"); delImage(confirmDel); }}
               >{t("delete.confirm")}</button>
             </div>
@@ -380,7 +380,7 @@ export default function WallPage() {
         </div>
       )}
       <button
-        className="add-btn fixed right-6 bottom-6 w-12 h-12 rounded-full border-none bg-accent text-white text-2xl leading-none cursor-pointer shadow-[0_6px_20px_rgba(217,108,74,.4)] transition-transform duration-150 ease-out hover:translate-y-[-2px] hover:scale-105 hover:shadow-[0_10px_28px_rgba(217,108,74,.5)] active:scale-95 select-none z-[100]"
+        className="add-btn fixed right-6 bottom-6 w-12 h-12 rounded-full border-none bg-black text-white text-2xl leading-none cursor-pointer shadow-[0_6px_20px_rgba(0,0,0,.25)] transition-transform duration-150 ease-out hover:translate-y-[-2px] hover:scale-105 hover:shadow-[0_10px_28px_rgba(0,0,0,.3)] active:scale-95 select-none z-[100] dark:bg-white dark:text-black"
         aria-label={t("add.aria")} title={t("add.aria")} onClick={() => fileRef.current?.click()}>+</button>
     </main>
   );
