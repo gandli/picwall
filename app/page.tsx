@@ -28,7 +28,11 @@ export default function WallPage() {
   const [soundOn, setSoundOn] = useState(true);
   const [confirmDel, setConfirmDel] = useState<Img | null>(null);
   const [captioning, setCaptioning] = useState<Set<string>>(new Set());
-  const firstRun = useRef(localStorage.getItem("picwall.captioned") === "1");
+  // lazy read: useRef initializer would run on server during prerender (no localStorage)
+  const firstRun = useRef<boolean | null>(null);
+  if (firstRun.current === null && typeof window !== "undefined") {
+    firstRun.current = localStorage.getItem("picwall.captioned") === "1";
+  }
   const suppressClick = useRef(false);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
