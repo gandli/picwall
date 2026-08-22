@@ -9,7 +9,6 @@ All notable changes to PicWall are documented here. Format follows
 ### Added
 - [ImgBot] Optimize images (#29)
 - feat: local in-browser image captioning (EN caption + ZH translate) (#30)
-- [ImgBot] Optimize images (#34)
 - feat: caption progress indicator on photo cards (#37)
 - e2e: statement coverage gate at 100% for UI surface (#39)
 
@@ -17,6 +16,8 @@ All notable changes to PicWall are documented here. Format follows
 - style: Scandinavian redesign — neutral black-and-white system (#40)
 
 ### Fixed
+- fix(changelog): tolerate PR-less commit ranges + match ImgBot rows (#47)
+- fix(changelog): merge into existing Unreleased section (#49)
 - fix: hovered card floating above lightbox overlay (#32)
 - fix: bump sharp to 0.35.x via override (GHSA-f88m-g3jw-g9cj) (#38)
 
