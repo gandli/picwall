@@ -245,7 +245,7 @@ export default function WallPage() {
           return (
           <div
             key={img.id}
-            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer overflow-hidden max-sm:w-[calc(50%-10px)] max-sm:m-0 max-sm:mb-2 max-sm:rotate-[var(--tilt)]"
+            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer overflow-hidden select-none [touch-action:pan-y] [-webkit-touch-callout:none] max-sm:w-[calc(50%-10px)] max-sm:m-0 max-sm:mb-2 max-sm:rotate-[var(--tilt)]"
             style={{ "--tilt": `${tilts.current[i]}deg` } as React.CSSProperties}
             data-idx={i}
             data-src={img.path}
@@ -260,64 +260,90 @@ export default function WallPage() {
               const sx = e.clientX, sy = e.clientY;
               const ox = el.offsetLeft, oy = el.offsetTop;
               const isTouch = e.pointerType !== "mouse";
-              let dragged = false, axis: "x" | "y" | null = null, freeDrag = false, lastDx = 0, lastDy = 0;
-              const move = (ev: PointerEvent) => {
-                const dx = ev.clientX - sx, dy = ev.clientY - sy;
-                lastDx = dx; lastDy = dy;
-                if (!axis) {
-                  if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-                  axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-                }
-                // horizontal-ish but vertical component grows → upgrade to free drag
-                if (axis === "x" && !freeDrag && Math.abs(dy) >= 12) freeDrag = true;
-                if (isTouch && axis === "y") return; // vertical swipe = scroll, not drag
-                if (!dragged) {
-                  dragged = true;
+              // mouse: immediate drag. touch: long-press (400ms) arms drag mode
+              let dragMode = !isTouch;
+              let armed = false; // long-press fired → card follows finger
+              let moved = false; // any movement before arm = gesture (swipe/scroll)
+              let axis: "x" | "y" | null = null;
+              let lastX = sx, lastY = sy;
+              const pressTimer = isTouch ? window.setTimeout(() => {
+                if (!moved) {
+                  armed = true;
                   el.style.transition = "none";
+                  el.style.zIndex = "100";
+                  el.style.transform = "scale(1.04) rotate(0deg)";
+                  navigator.vibrate?.(30);
                 }
-                el.style.left = `${ox + dx}px`;
-                if (axis === "x" && !freeDrag) {
-                  // pure horizontal: swipe-follow (delete reveal), keep tilt
-                } else {
-                  el.style.top = `${oy + dy}px`;
-                }
-                el.style.zIndex = "100";
-              };
-              const up = (ev: PointerEvent) => {
+              }, 400) : null;
+              const cleanup = () => {
+                if (pressTimer) clearTimeout(pressTimer);
                 window.removeEventListener("pointermove", move);
                 window.removeEventListener("pointerup", up);
                 window.removeEventListener("pointercancel", up);
-                // touchEnd carries no coordinates — use last move delta
-                const dx = lastDx, dy = lastDy;
-                // pure horizontal swipe (no vertical component): left = delete, right = move
-                // diagonal / vertical = reposition drag
-                const isSwipe = isTouch && axis === "x" && !freeDrag && Math.abs(dy) < 12;
-                if (isSwipe) {
-                  if (dx < -60) {
-                    setConfirmDel(img);
-                    play("toggle");
-                    el.style.transition = "";
-                    el.style.left = `${ox}px`;
-                  } else if (dx > 60) {
-                    el.style.transition = "";
-                    const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
-                    if (id) savePos(id, el.offsetLeft, el.offsetTop);
-                    suppressClick.current = true;
-                    setTimeout(() => { suppressClick.current = false; }, 0);
-                  } else {
-                    el.style.transition = "";
-                    el.style.left = `${ox}px`;
-                    suppressClick.current = true;
-                    setTimeout(() => { suppressClick.current = false; }, 0);
+              };
+              const move = (ev: PointerEvent) => {
+                lastX = ev.clientX; lastY = ev.clientY;
+                const dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (!armed && !moved && Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                if (!armed) moved = true;
+                if (!dragMode && !armed) {
+                  // pre-arm movement: classify gesture once
+                  if (!axis && (Math.abs(dx) >= 6 || Math.abs(dy) >= 6)) {
+                    axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+                    if (axis === "x" && isTouch) {
+                      // horizontal swipe → cancel long-press, follow finger
+                      if (pressTimer) { clearTimeout(pressTimer); }
+                      el.style.transition = "none";
+                      el.style.zIndex = "100";
+                    } else if (axis === "y") {
+                      cleanup(); // vertical = page scroll, release card
+                      return;
+                    }
                   }
-                } else if (dragged) {
+                }
+                if (armed || (axis === "x" && !isTouch)) {
+                  // free drag: x+y follow finger (post-arm or mouse)
+                  el.style.left = `${ox + dx}px`;
+                  el.style.top = `${oy + dy}px`;
+                  ev.preventDefault();
+                } else if (axis === "x") {
+                  // swipe-follow before threshold
+                  el.style.left = `${ox + dx}px`;
+                  ev.preventDefault();
+                }
+              };
+              const up = (ev: PointerEvent) => {
+                cleanup();
+                const dx = lastX - sx, dy = lastY - sy;
+                // armed = long-press drag → save position
+                if (armed) {
                   el.style.transition = "";
+                  el.style.transform = "";
                   const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
                   if (id) savePos(id, el.offsetLeft, el.offsetTop);
                   suppressClick.current = true;
                   setTimeout(() => { suppressClick.current = false; }, 0);
                   ev.preventDefault();
+                } else if (axis === "x") {
+                  // horizontal swipe: left past 60px → delete, else snap back
+                  el.style.transition = "";
+                  if (dx < -60 && isTouch) {
+                    setConfirmDel(img);
+                    play("toggle");
+                    el.style.left = `${ox}px`;
+                  } else if (!isTouch || dx > 60) {
+                    // mouse drag-x or right swipe: keep new x
+                    const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
+                    if (id) savePos(id, el.offsetLeft, el.offsetTop);
+                    suppressClick.current = true;
+                    setTimeout(() => { suppressClick.current = false; }, 0);
+                  } else {
+                    el.style.left = `${ox}px`;
+                    suppressClick.current = true;
+                    setTimeout(() => { suppressClick.current = false; }, 0);
+                  }
                 } else {
+                  // tap / scroll — restore
                   el.style.transition = "";
                 }
               };
