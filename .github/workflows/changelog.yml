@@ -40,7 +40,9 @@ jobs:
           LAST=$(git log -1 --format=%H -- CHANGELOG.md)
           echo "last changelog commit: $LAST"
 
-          git log "$LAST..HEAD" --format='%H %s' | grep -E '\(#[0-9]+\)$' | while read -r sha subject; do
+          # grep exits 1 when no commit carries a (#N) suffix — that's "nothing
+          # to do", not an error; pipefail would otherwise kill the step
+          git log "$LAST..HEAD" --format='%H %s' | { grep -E '\(#[0-9]+\)$' || true; } | while read -r sha subject; do
             num=$(echo "$subject" | grep -o '#[0-9]*' | tr -d '#')
             api=$(gh api "repos/${{ github.repository }}/pulls/$num" --jq '{title:.title, labels:[.labels[].name]}')
             title=$(echo "$api" | python3 -c 'import json,sys; print(json.load(sys.stdin)["title"])')
@@ -57,7 +59,7 @@ jobs:
           done | sort -u > /tmp/pr-rows.txt
 
           # skip bots (ImgBot etc.) and rows already covered
-          grep -v $'\tOptimize images' /tmp/pr-rows.txt > /tmp/pr-rows-clean.txt || true
+          grep -v -e '	Optimize images' -e '	\[ImgBot\]' /tmp/pr-rows.txt > /tmp/pr-rows-clean.txt || true
           COUNT=$(wc -l < /tmp/pr-rows-clean.txt | tr -d ' ')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           cat /tmp/pr-rows-clean.txt
