@@ -7,6 +7,7 @@ All notable changes to PicWall are documented here. Format follows
 ## [Unreleased]
 
 ### Added
+- feat: seed fixtures with real Unsplash photos (#51)
 - [ImgBot] Optimize images (#29)
 - feat: local in-browser image captioning (EN caption + ZH translate) (#30)
 - feat: caption progress indicator on photo cards (#37)
