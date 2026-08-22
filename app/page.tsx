@@ -86,34 +86,39 @@ export default function WallPage() {
     const wall = wallRef.current;
     if (!wall) return;
     const cards = wall.querySelectorAll<HTMLElement>(".polaroid");
-    if (!cards.length || window.innerWidth <= 640) return;
+    if (!cards.length) return;
     const saved = loadPos();
-    const cols = 4, w = 240;
+    const isMobile = window.innerWidth <= 640;
     // masonry: track tallest column, shortest column gets next card
+    const cols = isMobile ? 2 : 4;
+    const w = isMobile ? Math.floor(wall.clientWidth / 2) : 240;
     const colH = new Array(cols).fill(0);
     cards.forEach((el, i) => {
       const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
       const sp = id ? saved[id] : undefined;
       if (sp) {
-        el.style.left = `${sp.x}px`;
-        el.style.top = `${sp.y}px`;
+        // clamp stale/out-of-bounds saves (e.g. desktop coords on phone)
+        const maxX = Math.max(0, wall.clientWidth - el.offsetWidth);
+        el.style.left = `${Math.min(Math.max(0, sp.x), maxX)}px`;
+        el.style.top = `${Math.max(0, sp.y)}px`;
       } else {
         // shortest column wins
         const c = colH.indexOf(Math.min(...colH));
-        el.style.left = `${c * w + rand(-15, 15)}px`;
-        el.style.top = `${colH[c] + rand(-10, 10)}px`;
-        colH[c] += el.offsetHeight + 20;
+        // mobile: no rotation — upright cards keep bbox == card, columns stay clean
+        el.style.left = `${c * w}px`;
+        el.style.top = `${colH[c]}px`;
+        colH[c] += el.offsetHeight + (isMobile ? 24 : 20);
       }
-      el.style.transform = `rotate(${rand(-6, 6)}deg)`;
+      el.style.transform = isMobile ? "none" : `rotate(${rand(-6, 6)}deg)`;
       el.style.zIndex = String(Math.floor(rand(1, 20)));
       el.style.transitionDelay = `${i * 50}ms`;
       if (!el.dataset.entered) {
         el.dataset.entered = "1";
         el.style.opacity = "0";
-        el.style.transform = `rotate(${rand(-6, 6)}deg) scale(.92) translateY(14px)`;
+        el.style.transform = isMobile ? "scale(.92) translateY(14px)" : `rotate(${rand(-6, 6)}deg) scale(.92) translateY(14px)`;
         requestAnimationFrame(() => requestAnimationFrame(() => {
           el.style.opacity = "1";
-          el.style.transform = `rotate(${rand(-6, 6)}deg) scale(1) translateY(0)`;
+          el.style.transform = isMobile ? "scale(1) translateY(0)" : `rotate(${rand(-6, 6)}deg) scale(1) translateY(0)`;
           setTimeout(() => { el.style.transitionDelay = "0ms"; }, 600);
         }));
       }
@@ -121,16 +126,20 @@ export default function WallPage() {
     wall.style.height = `${Math.max(...colH) + 320}px`;
   }
 
+  // positions are per-device: desktop coords are meaningless on a narrow screen
+  function posKey() {
+    return window.innerWidth <= 640 ? "picwall.pos.m" : "picwall.pos.d";
+  }
   function loadPos(): Record<string, { x: number; y: number }> {
     try {
-      return JSON.parse(localStorage.getItem("picwall.pos") || "{}");
+      return JSON.parse(localStorage.getItem(posKey()) || "{}");
     } catch { return {}; }
   }
 
   function savePos(id: string, x: number, y: number) {
     const all = loadPos();
     all[id] = { x, y };
-    localStorage.setItem("picwall.pos", JSON.stringify(all));
+    localStorage.setItem(posKey(), JSON.stringify(all));
   }
 
   useEffect(() => {
@@ -196,7 +205,7 @@ export default function WallPage() {
       }}
     >
       {dragOver && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center text-2xl text-white bg-ink/60 tracking-[.06em]">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center text-2xl text-white bg-ink/80 tracking-[.06em]">
           {t("drag.hint")}
         </div>
       )}
@@ -206,33 +215,33 @@ export default function WallPage() {
           <button
             aria-label={t("theme.aria")} title={t("theme.aria")}
             onClick={toggleTheme}
-            className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
-          >{dark ? "☀️" : "🌙"}</button>
+            className="w-9 h-9 rounded-full border border-black/10 bg-white text-ink text-sm cursor-pointer hover:bg-paper-2 dark:border-white/15 dark:bg-dark-card dark:text-dark-text dark:hover:bg-dark-bg"
+          >{dark ? "◐" : "○"}</button>
           <button
             aria-label={t("lang.aria")} title={t("lang.aria")}
             onClick={() => setLang(lang === "zh" ? "en" : "zh")}
-            className="w-9 h-9 rounded-full border-none bg-card text-ink text-xs font-bold cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
+            className="w-9 h-9 rounded-full border border-black/10 bg-white text-ink text-xs font-medium cursor-pointer hover:bg-paper-2 dark:border-white/15 dark:bg-dark-card dark:text-dark-text dark:hover:bg-dark-bg"
           >{lang === "zh" ? "EN" : "中"}</button>
           <button
             aria-label={soundOn ? t("sound.on.aria") : t("sound.off.aria")} title={soundOn ? t("sound.on.aria") : t("sound.off.aria")}
             onClick={toggleSound}
-            className="w-9 h-9 rounded-full border-none bg-card text-ink text-base cursor-pointer shadow-sm hover:scale-105 transition-transform dark:bg-dark-card dark:text-dark-text"
-          >{soundOn ? "🔊" : "🔇"}</button>
+            className="w-9 h-9 rounded-full border border-black/10 bg-white text-ink text-sm cursor-pointer hover:bg-paper-2 dark:border-white/15 dark:bg-dark-card dark:text-dark-text dark:hover:bg-dark-bg"
+          >{soundOn ? "◁" : "▷"}</button>
         </div>
         <h1 className="font-[var(--font-serif)] text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] text-ink dark:text-dark-ink max-sm:text-xl max-sm:pr-20 max-sm:leading-[1.15]">
-          PicWall <span className="text-accent font-bold">{t("app.subtitle")}</span>
+          PicWall <span className="font-bold">{t("app.subtitle")}</span>
         </h1>
         <p className="text-[13px] text-ink-soft mt-2 tracking-[.04em] dark:text-dark-soft max-sm:text-[12px] max-sm:pr-20">
           {t("app.tagline")}
         </p>
       </header>
 
-      <div className="wall relative w-[90%] max-w-[1200px] mx-auto min-h-[60vh] py-6 pb-15 max-sm:columns-2 max-sm:gap-3" ref={wallRef}>
+      <div className="wall relative w-[90%] max-w-[1200px] mx-auto min-h-[60vh] py-6 pb-15" ref={wallRef}>
         {!loaded && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>加载中…</p></div>}
         {error && <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft"><p>{error}</p></div>}
         {loaded && !error && images.length === 0 && (
           <div className="text-center py-22 px-5 text-ink-soft dark:text-dark-soft">
-            <div className="w-30 h-30 mx-auto mb-5 border-[1.5px] border-dashed border-ink/20 rounded-full flex items-center justify-center text-[34px] text-accent font-[var(--font-serif)]">
+            <div className="w-30 h-30 mx-auto mb-5 border-[1.5px] border-dashed border-ink/20 rounded-full flex items-center justify-center text-[34px] font-[var(--font-serif)]">
               +
             </div>
             <p className="text-[15px]">{t("empty.title")}</p>
@@ -244,8 +253,9 @@ export default function WallPage() {
           return (
           <div
             key={img.id}
-            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer max-sm:static max-sm:w-full max-sm:mb-3.5 max-sm:break-inside-avoid max-sm:inline-block max-sm:rotate-[var(--tilt)]"
+            className="polaroid group absolute w-[220px] bg-card p-2.5 pb-10 border border-black/5 shadow-[var(--shadow-polaroid)] cursor-pointer overflow-hidden select-none [touch-action:pan-y] [-webkit-touch-callout:none] max-sm:w-[calc(50%-10px)] max-sm:m-0"
             style={{ "--tilt": `${tilts.current[i]}deg` } as React.CSSProperties}
+            data-idx={i}
             data-src={img.path}
             data-title={img.title}
             data-desc={img.desc}
@@ -254,35 +264,94 @@ export default function WallPage() {
             aria-label={`${t("view.aria")} ${img.title}`}
             data-cuelume-press data-cuelume-hover="tick"
             onPointerDown={(e) => {
-              // desktop only; touch/mobile pass through
-              if (e.pointerType !== "mouse") return;
               const el = e.currentTarget as HTMLElement;
               const sx = e.clientX, sy = e.clientY;
               const ox = el.offsetLeft, oy = el.offsetTop;
-              let dragged = false;
-              const move = (ev: PointerEvent) => {
-                const dx = ev.clientX - sx, dy = ev.clientY - sy;
-                if (!dragged && Math.hypot(dx, dy) < 6) return;
-                dragged = true;
-                el.style.left = `${ox + dx}px`;
-                el.style.top = `${oy + dy}px`;
-                el.style.zIndex = "100";
-                el.style.transition = "none";
-              };
-              const up = (ev: PointerEvent) => {
+              const isTouch = e.pointerType !== "mouse";
+              // mouse: immediate drag. touch: long-press (400ms) arms drag mode
+              let dragMode = !isTouch;
+              let armed = false; // long-press fired → card follows finger
+              let moved = false; // any movement before arm = gesture (swipe/scroll)
+              let axis: "x" | "y" | null = null;
+              let lastX = sx, lastY = sy;
+              const pressTimer = isTouch ? window.setTimeout(() => {
+                if (!moved) {
+                  armed = true;
+                  el.style.transition = "none";
+                  el.style.zIndex = "100";
+                  el.style.transform = "scale(1.04) rotate(0deg)";
+                  navigator.vibrate?.(30);
+                }
+              }, 400) : null;
+              const cleanup = () => {
+                if (pressTimer) clearTimeout(pressTimer);
                 window.removeEventListener("pointermove", move);
                 window.removeEventListener("pointerup", up);
                 window.removeEventListener("pointercancel", up);
-                if (dragged) {
-                  // read final position with transitions disabled (else CSS snaps back)
-                  el.style.transition = "none";
+              };
+              const move = (ev: PointerEvent) => {
+                lastX = ev.clientX; lastY = ev.clientY;
+                const dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (!armed && !moved && Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                if (!armed) moved = true;
+                if (!dragMode && !armed) {
+                  // pre-arm movement: classify gesture once
+                  if (!axis && (Math.abs(dx) >= 6 || Math.abs(dy) >= 6)) {
+                    axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+                    if (axis === "x" && isTouch) {
+                      // horizontal swipe → cancel long-press, follow finger
+                      if (pressTimer) { clearTimeout(pressTimer); }
+                      el.style.transition = "none";
+                      el.style.zIndex = "100";
+                    } else if (axis === "y") {
+                      cleanup(); // vertical = page scroll, release card
+                      return;
+                    }
+                  }
+                }
+                if (armed || (axis === "x" && !isTouch)) {
+                  // free drag: x+y follow finger (post-arm or mouse)
+                  el.style.left = `${ox + dx}px`;
+                  el.style.top = `${oy + dy}px`;
+                  ev.preventDefault();
+                } else if (axis === "x") {
+                  // swipe-follow before threshold
+                  el.style.left = `${ox + dx}px`;
+                  ev.preventDefault();
+                }
+              };
+              const up = (ev: PointerEvent) => {
+                cleanup();
+                const dx = lastX - sx, dy = lastY - sy;
+                // armed = long-press drag → save position
+                if (armed) {
+                  el.style.transition = "";
+                  el.style.transform = "";
                   const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
                   if (id) savePos(id, el.offsetLeft, el.offsetTop);
-                  el.style.transition = "";
                   suppressClick.current = true;
                   setTimeout(() => { suppressClick.current = false; }, 0);
                   ev.preventDefault();
+                } else if (axis === "x") {
+                  // horizontal swipe: left past 60px → delete, else snap back
+                  el.style.transition = "";
+                  if (dx < -60 && isTouch) {
+                    setConfirmDel(img);
+                    play("toggle");
+                    el.style.left = `${ox}px`;
+                  } else if (!isTouch || dx > 60) {
+                    // mouse drag-x or right swipe: keep new x
+                    const id = el.dataset.src?.split("/").pop()?.replace(/\.[^.]+$/, "");
+                    if (id) savePos(id, el.offsetLeft, el.offsetTop);
+                    suppressClick.current = true;
+                    setTimeout(() => { suppressClick.current = false; }, 0);
+                  } else {
+                    el.style.left = `${ox}px`;
+                    suppressClick.current = true;
+                    setTimeout(() => { suppressClick.current = false; }, 0);
+                  }
                 } else {
+                  // tap / scroll — restore
                   el.style.transition = "";
                 }
               };
@@ -294,21 +363,21 @@ export default function WallPage() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(img); play("arrival"); } }}
           >
             <img src={img.path} alt={img.title} width={200} height={200} loading="lazy"
-              className="w-full h-auto block bg-paper-2 saturate-[.92] contrast-[1.02] outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10"
+              className="w-full h-auto block bg-paper-2 outline-1 outline-black/10 dark:bg-dark-card dark:outline-white/10"
               onLoad={() => layout()} />
             <button
               aria-label={t("delete.aria")}
               title={t("delete.aria")}
               data-cuelume-press
               onClick={(e) => { e.stopPropagation(); setConfirmDel(img); play("toggle"); }}
-              className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-[rgba(26,24,18,.55)] text-white text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100"
+              className="absolute top-1 right-1 w-5 h-5 -m-3 p-3 text-ink-soft/70 text-sm leading-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:text-ink max-sm:hidden dark:text-white/60 dark:hover:text-white"
             >✕</button>
-            <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
+            <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-ink-soft font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
               {img.title}
-              {captioning.has(img.id) && <span className="text-accent"> · {t("caption.loading")}</span>}
+              {captioning.has(img.id) && <span> · {t("caption.loading")}</span>}
             </div>
             {captioning.has(img.id) && firstRun.current === false && (
-              <div className="absolute bottom-8 left-2 right-2 text-center text-[10px] leading-tight text-[#9a9184] dark:text-dark-soft">
+              <div className="absolute bottom-8 left-2 right-2 text-center text-[10px] leading-tight text-ink-soft/70 dark:text-dark-soft">
                 {t("caption.first")}
               </div>
             )}
@@ -319,13 +388,13 @@ export default function WallPage() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-[500] flex items-center justify-center bg-[rgba(26,24,18,.7)] backdrop-blur-[6px] cursor-pointer dark:bg-[rgba(0,0,0,.75)]"
+          className="fixed inset-0 z-[500] flex items-center justify-center bg-black/70 backdrop-blur-[6px] cursor-pointer dark:bg-black/75"
           onClick={() => { setLightbox(null); play("page"); }} role="dialog" aria-modal="true"
           onKeyDown={(e) => { if (e.key === "Escape") { setLightbox(null); play("page"); } }}
           tabIndex={-1}
           ref={(el) => el?.focus()}
         >
-          <div className="bg-card rounded-xl max-w-[90vw] max-h-[85vh] overflow-auto cursor-default shadow-[0_0_0_1px_rgba(0,0,0,.06),0_32px_64px_rgba(0,0,0,.3)] relative dark:bg-dark-card"
+          <div className="bg-card rounded-lg max-w-[90vw] max-h-[85vh] overflow-auto cursor-default shadow-[0_0_0_1px_rgba(0,0,0,.08),0_32px_64px_rgba(0,0,0,.3)] relative dark:bg-dark-card"
             onClick={(e) => e.stopPropagation()}>
             <img src={lightbox.path} alt={lightbox.title} className="block max-w-[90vw] max-h-[70vh] object-contain" />
             <div className="pt-3.5 px-5 pb-1 text-[17px] font-semibold font-[var(--font-serif)] dark:text-dark-text">{lightbox.title}</div>
@@ -339,13 +408,13 @@ export default function WallPage() {
 
       {confirmDel && (
         <div
-          className="fixed inset-0 z-[600] flex items-center justify-center bg-[rgba(26,24,18,.55)] backdrop-blur-[4px]"
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 backdrop-blur-[4px]"
           onClick={() => { setConfirmDel(null); play("press"); }} role="alertdialog" aria-modal="true"
           onKeyDown={(e) => { if (e.key === "Escape") { setConfirmDel(null); play("press"); } }}
           tabIndex={-1}
         >
           <div
-            className="bg-card rounded-xl p-6 max-w-[320px] w-[85vw] shadow-[0_32px_64px_rgba(0,0,0,.3)] text-center dark:bg-dark-card"
+            className="bg-card rounded-lg p-6 max-w-[320px] w-[85vw] shadow-[0_32px_64px_rgba(0,0,0,.3)] text-center dark:bg-dark-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-[15px] font-semibold font-[var(--font-serif)] dark:text-dark-text">{t("delete.confirm")}</div>
@@ -357,7 +426,7 @@ export default function WallPage() {
                 onClick={() => { setConfirmDel(null); play("press"); }}
               >{t("delete.cancel")}</button>
               <button
-                className="flex-1 h-9 rounded-full bg-[#c0392b] text-white text-[13px] font-semibold cursor-pointer hover:bg-[#a93226]"
+                className="flex-1 h-9 rounded-full bg-black text-white text-[13px] font-medium cursor-pointer hover:bg-black/80"
                 onClick={() => { play("pulse"); delImage(confirmDel); }}
               >{t("delete.confirm")}</button>
             </div>
@@ -380,7 +449,7 @@ export default function WallPage() {
         </div>
       )}
       <button
-        className="add-btn fixed right-6 bottom-6 w-12 h-12 rounded-full border-none bg-accent text-white text-2xl leading-none cursor-pointer shadow-[0_6px_20px_rgba(217,108,74,.4)] transition-transform duration-150 ease-out hover:translate-y-[-2px] hover:scale-105 hover:shadow-[0_10px_28px_rgba(217,108,74,.5)] active:scale-95 select-none z-[100]"
+        className="add-btn fixed right-6 bottom-6 w-12 h-12 rounded-full border-none bg-black text-white text-2xl leading-none cursor-pointer shadow-[0_6px_20px_rgba(0,0,0,.25)] transition-transform duration-150 ease-out hover:translate-y-[-2px] hover:scale-105 hover:shadow-[0_10px_28px_rgba(0,0,0,.3)] active:scale-95 select-none z-[100] dark:bg-white dark:text-black"
         aria-label={t("add.aria")} title={t("add.aria")} onClick={() => fileRef.current?.click()}>+</button>
     </main>
   );
