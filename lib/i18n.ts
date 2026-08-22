@@ -30,6 +30,8 @@ export const DICTS: Record<Lang, Record<string, string>> = {
     "upload.error": "上传失败",
     "sound.on.aria": "关闭音效",
     "sound.off.aria": "开启音效",
+    "caption.loading": "AI 描述生成中…",
+    "caption.first": "首次需下载本地模型（约330MB），请稍候",
   },
   en: {
     "app.title": "PicWall",
@@ -54,6 +56,8 @@ export const DICTS: Record<Lang, Record<string, string>> = {
     "upload.error": "Upload failed",
     "sound.on.aria": "Mute sound",
     "sound.off.aria": "Enable sound",
+    "caption.loading": "Generating AI description…",
+    "caption.first": "First run downloads local models (~330MB), hang tight",
   },
 };
 

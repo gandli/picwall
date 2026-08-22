@@ -27,6 +27,12 @@ export default function WallPage() {
   const [dark, setDark] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [confirmDel, setConfirmDel] = useState<Img | null>(null);
+  const [captioning, setCaptioning] = useState<Set<string>>(new Set());
+  // lazy read: useRef initializer would run on server during prerender (no localStorage)
+  const firstRun = useRef<boolean | null>(null);
+  if (firstRun.current === null && typeof window !== "undefined") {
+    firstRun.current = localStorage.getItem("picwall.captioned") === "1";
+  }
   const suppressClick = useRef(false);
   const wallRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -149,15 +155,26 @@ export default function WallPage() {
       play("success");
       // caption in-browser (local models) — PATCH result to manifest for persistence
       for (const img of ok) {
-        void captionImage(img).then(async (cap) => {
-          if (!cap) return;
-          const r = await fetch(`/api/images/${img.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cap),
+        setCaptioning((prev) => new Set(prev).add(img.id));
+        void captionImage(img)
+          .then(async (cap) => {
+            if (!cap) return;
+            const r = await fetch(`/api/images/${img.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cap),
+            });
+            if (r.ok) setImages((prev) => prev.map((m) => (m.id === img.id ? { ...m, ...cap } : m)));
+          })
+          .finally(() => {
+            setCaptioning((prev) => {
+              const next = new Set(prev);
+              next.delete(img.id);
+              return next;
+            });
+            firstRun.current = true;
+            localStorage.setItem("picwall.captioned", "1");
           });
-          if (r.ok) setImages((prev) => prev.map((m) => (m.id === img.id ? { ...m, ...cap } : m)));
-        });
       }
     } catch (e) {
       setError(t("upload.error"));
@@ -288,7 +305,13 @@ export default function WallPage() {
             >✕</button>
             <div className="absolute bottom-3 left-2 w-[calc(100%-16px)] text-center text-xs text-[#6f675a] font-[var(--font-typewriter)] tracking-[.06em] whitespace-nowrap overflow-hidden text-ellipsis dark:text-dark-cap">
               {img.title}
+              {captioning.has(img.id) && <span className="text-accent"> · {t("caption.loading")}</span>}
             </div>
+            {captioning.has(img.id) && firstRun.current === false && (
+              <div className="absolute bottom-8 left-2 right-2 text-center text-[10px] leading-tight text-[#9a9184] dark:text-dark-soft">
+                {t("caption.first")}
+              </div>
+            )}
           </div>
           );
         })}
