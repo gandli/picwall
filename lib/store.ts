@@ -40,6 +40,13 @@ export function getImages(): ImageMeta[] {
   }
 }
 
+/** Strict read for the API surface: a corrupt manifest is a 500, not a
+ *  silent empty wall (which the UI can't distinguish from "no photos"). */
+export function getImagesStrict(): ImageMeta[] {
+  if (!fs.existsSync(MANIFEST)) return [];
+  return JSON.parse(fs.readFileSync(MANIFEST, "utf-8")); // throws on corruption
+}
+
 // atomic manifest save: tmp file + rename in the same dir. A crash mid-write
 // can never leave a truncated manifest (which would blank the whole wall).
 function saveManifest(images: ImageMeta[]): void {

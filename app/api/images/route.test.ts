@@ -143,4 +143,11 @@ describe("GET /api/images", () => {
     expect(out[0]).toHaveProperty("path");
     expect(out[0]).toHaveProperty("uploaded_at");
   });
+
+  it("manifest 损坏 → 500 而非静默空墙", async () => {
+    fs.writeFileSync(process.env.PICWALL_MANIFEST!, "{corrupt");
+    const res = await route.GET();
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toContain("manifest");
+  });
 });
