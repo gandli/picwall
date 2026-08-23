@@ -27,6 +27,7 @@ All notable changes to PicWall are documented here. Format follows
 - fix: bump sharp to 0.35.x via override (GHSA-f88m-g3jw-g9cj) (#38)
 
 ### Documentation
+- docs: AI chapter reflects Florence-2 swap (#64)
 - docs: refresh user-manual screenshots (#57)
 - docs(readme): refresh — badges, accurate stack, governance links, fresh showcase (#28)
 - docs: user manual chapter for AI image captioning (#33)
