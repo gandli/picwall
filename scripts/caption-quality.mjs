@@ -1,9 +1,8 @@
-// Caption quality eval: run the REAL vit-gpt2 → opus-mt-en-zh pipeline (same
-// models as lib/vision.ts, loaded from the local e2e/fixtures/models cache —
-// no network) against the 5 seeded fixture photos, then score title/desc
-// quality. Not a CI gate (CI has no model cache) — a local diagnostic:
-//   1) prepare cache:  node scripts/sync-e2e-models.mjs   (once, warm profile)
-//   2) run:            node scripts/caption-quality.mjs
+// Caption quality eval: run the REAL Florence-2 → opus-mt-en-zh pipeline (same
+// models as lib/vision.ts) against the 5 seeded fixture photos, then score
+// title/desc quality. Downloads model weights on first run (~275MB, then
+// browser/node cache). Not a CI gate — a local diagnostic:
+//   run: node scripts/caption-quality.mjs
 // Scoring per photo: structure (non-empty title ≤16, desc ≤60, derived exactly
 // as vision.ts does) + keyword hit (seed's expected English nouns appear in the
 // raw caption). Output: table + overall score; exit 1 if any caption is empty
@@ -13,36 +12,23 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const cacheDir = path.join(root, "e2e", "fixtures", "models");
-const workDir = "/tmp/picwall-eval-models";
-
-if (!fs.existsSync(cacheDir)) {
-  console.error(`no model cache at ${cacheDir} — run scripts/sync-e2e-models.mjs first`);
-  process.exit(2);
-}
-
-// flatten Cache-API dump → transformers local_model_dir layout
-for (const [model, dir] of [
-  ["Xenova__vit-gpt2-image-captioning__resolve__main__", "vit-gpt2"],
-  ["Xenova__opus-mt-en-zh__resolve__main__", "opus-mt"],
-]) {
-  const dest = path.join(workDir, dir);
-  fs.rmSync(dest, { recursive: true, force: true });
-  for (const f of fs.readdirSync(cacheDir)) {
-    if (!f.startsWith(model)) continue;
-    const rel = f.slice(model.length).replace("onnx__", "onnx/");
-    const target = path.join(dest, rel);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.copyFileSync(path.join(cacheDir, f), target);
-  }
-}
-
 const t = await import("@huggingface/transformers");
-t.env.localModelPath = workDir;
-t.env.allowRemoteModels = false;
 
-const cap = await t.pipeline("image-to-text", "vit-gpt2", { device: "cpu", dtype: "q8" });
-const tr = await t.pipeline("translation", "opus-mt", { device: "cpu", dtype: "q8" });
+const processor = await t.Florence2Processor.from_pretrained("onnx-community/Florence-2-base-ft", {
+  dtype: "q8",
+});
+const florence = await t.Florence2ForConditionalGeneration.from_pretrained(
+  "onnx-community/Florence-2-base-ft",
+  { dtype: { embed_tokens: "q8", vision_encoder: "q8", encoder_model: "q8", decoder_model_merged: "q8" }, device: "cpu" }
+);
+const tr = await t.pipeline("translation", "Xenova/opus-mt-en-zh", { device: "cpu", dtype: "q8" });
+
+async function captionEn(file) {
+  const image = await t.RawImage.read(path.join(root, "uploads", file));
+  const inputs = await processor(image, "<MORE_DETAILED_CAPTION>");
+  const ids = await florence.generate({ ...inputs, max_new_tokens: 256 });
+  return processor.batch_decode(ids.slice(null, [inputs.input_ids.dims[1], null]), { skip_special_tokens: true })[0].trim();
+}
 
 // same derivation as vision.ts:57-58
 function derive(zh) {
@@ -52,7 +38,8 @@ function derive(zh) {
 
 // seeds mirror scripts/seed-e2e-fixtures.mjs (+ keywords the true content shows)
 const seeds = [
-  ["e72m8pezbc6.jpg", ["cabin", "river", "lake", "house"]],
+  // Florence-2 describes this shot as water+mountains (cabin too small to mention)
+  ["e72m8pezbc6.jpg", ["mountain", "water", "lake", "cabin"]],
   ["7v7d4ed99bx.jpg", ["forest", "road", "trees"]],
   ["0p3jjb6w8q9j.jpg", ["mountain", "cloud", "snow"]],
   ["l469vo1wvxk.jpg", ["mountain", "snow", "night", "sky"]],
@@ -62,8 +49,7 @@ const seeds = [
 let pass = 0;
 const rows = [];
 for (const [file, kws] of seeds) {
-  const img = await t.RawImage.read(path.join(root, "uploads", file));
-  const en = (await cap(img, { max_new_tokens: 30 }))[0].generated_text.trim();
+  const en = await captionEn(file);
   let zh = "";
   try { zh = (await tr(en))[0].translation_text.trim(); } catch { /* counted below */ }
   const { title, desc } = derive(zh);
