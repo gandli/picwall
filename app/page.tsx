@@ -159,7 +159,7 @@ export default function WallPage() {
       const ok = list.filter((m): m is Img => !("error" in m));
       setImages((prev) => [...prev, ...ok]);
       const failed = list.filter((m): m is { error: string; filename: string } => "error" in m);
-      if (failed.length) setError(`${t("upload.error")}: ${failed[0].error}`);
+      if (failed.length) setError(`${t("upload.error")} (${failed.length}): ${failed.map((f) => `${f.filename} ${f.error}`).join("; ")}`);
       else setError(null);
       play("success");
       // caption in-browser (local models) — PATCH result to manifest for persistence

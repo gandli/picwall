@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addImage, getImages } from "@/lib/store";
+import { addImage, getImagesStrict } from "@/lib/store";
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -27,7 +27,13 @@ function publicMeta(m: { id: string; path: string; width: number; height: number
 }
 
 export async function GET() {
-  return NextResponse.json(getImages().map(publicMeta));
+  try {
+    return NextResponse.json(getImagesStrict().map(publicMeta));
+  } catch {
+    // corrupt manifest: surface as server error so the UI shows its error
+    // state instead of a misleading empty wall
+    return NextResponse.json({ error: "manifest corrupted" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
