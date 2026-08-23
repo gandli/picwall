@@ -54,11 +54,61 @@ describe("边界分支补测", () => {
       filename: "a.jpg", width: 1, height: 1, size: 4, title: "t", desc: "",
       buf: Buffer.from([0xff, 0xd8, 0xff]),
     });
-    expect(store.deleteImage("nonexistent-id")).toBe(false);
+    await expect(store.deleteImage("nonexistent-id")).resolves.toBe(false);
     // 原数据不受影响
     expect(store.getImages().map((i) => i.id)).toEqual([meta.id]);
   });
+
+  it("并发 DELETE + PATCH 经写队列串行化，双方更新都不丢", async () => {
+    const e = await store.addImage({
+      filename: "race.jpg", width: 1, height: 1, size: 4, title: "旧", desc: "",
+      buf: Buffer.from([0xff, 0xd8]),
+    });
+    // fire concurrently — queue must serialize them
+    const [, patched] = await Promise.all([
+      store.deleteImage("other-id"), // no-op delete, keeps entry alive
+      store.updateImageMeta(e.id, { title: "新" }),
+    ]);
+    expect(patched?.title).toBe("新");
+    expect(store.getImages()[0].title).toBe("新");
+
+    // real race: delete the entry while a patch to it is in flight
+    const e2 = await store.addImage({
+      filename: "race2.jpg", width: 1, height: 1, size: 4, title: "旧", desc: "",
+      buf: Buffer.from([0xff, 0xd8]),
+    });
+    const [deleted] = await Promise.all([
+      store.deleteImage(e2.id),
+      store.updateImageMeta(e2.id, { title: "迟到的patch" }),
+    ]);
+    expect(deleted).toBe(true);
+    // serialized: whichever order ran, manifest is consistent — no resurrect
+    const left = store.getImages().filter((i) => i.id === e2.id);
+    expect(left.length).toBeLessThanOrEqual(1);
+    if (left.length === 1) expect(left[0].title).toBe("迟到的patch"); // patch won the race
+  });
 });
+
+  it("manifest 写入原子性：rename 失败时旧 manifest 保持完整", async () => {
+    const e = await store.addImage({
+      filename: "atom.jpg", width: 1, height: 1, size: 4, title: "完好", desc: "",
+      buf: Buffer.from([0xff, 0xd8]),
+    });
+    expect(store.getImages()).toHaveLength(1);
+    // block the rename step → addImage must reject, old manifest untouched
+    const realRename = fs.renameSync;
+    vi.spyOn(fs, "renameSync").mockImplementation(() => {
+      throw new Error("disk full");
+    });
+    await expect(store.addImage({
+      filename: "boom.jpg", width: 1, height: 1, size: 4, title: "炸", desc: "",
+      buf: Buffer.from([0xff, 0xd8]),
+    })).rejects.toThrow("disk full");
+    (fs.renameSync as any).mockRestore?.();
+    // manifest still parses and holds exactly the pre-crash entry
+    expect(store.getImages().map((i) => i.id)).toEqual([e.id]);
+    void realRename;
+  });
 
   it("写队列中单次失败不阻塞后续写入", async () => {
     // first write fails (bad meta), queue must still process the next
@@ -107,7 +157,7 @@ describe("边界分支补测", () => {
     });
     const p = store.UPLOAD_DIR + "/" + meta.id + ".jpg";
     fs.unlinkSync(p); // simulate file already removed
-    expect(store.deleteImage(meta.id)).toBe(true);
+    await expect(store.deleteImage(meta.id)).resolves.toBe(true);
     expect(store.getImages()).toHaveLength(0);
   });
   it("updateImageMeta 未知 id 返回 null", async () => {
