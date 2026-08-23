@@ -7,6 +7,7 @@ All notable changes to PicWall are documented here. Format follows
 ## [Unreleased]
 
 ### Added
+- feat: caption model upgrade — vit-gpt2 to Florence-2-base-ft (#62)
 - feat: 模型能力测试 — 真实 caption 管线质量评测 (#54)
 - feat: seed fixtures with real Unsplash photos (#51)
 - [ImgBot] Optimize images (#29)
