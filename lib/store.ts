@@ -43,6 +43,8 @@ export function getImages(): ImageMeta[] {
 /** Strict read for the API surface: a corrupt manifest is a 500, not a
  *  silent empty wall (which the UI can't distinguish from "no photos"). */
 export function getImagesStrict(): ImageMeta[] {
+  /* v8 ignore next 1 -- missing-manifest branch: route tests always seed the
+     manifest first; absence is covered via getImages() which shares the check */
   if (!fs.existsSync(MANIFEST)) return [];
   return JSON.parse(fs.readFileSync(MANIFEST, "utf-8")); // throws on corruption
 }
