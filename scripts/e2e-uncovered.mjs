@@ -1,5 +1,5 @@
 // Dump uncovered source lines for the coverage-gate files, using the same
-// sourcemap pipeline as the fixture. Run: node scripts/e2e-uncovered.tmp.mjs
+// sourcemap pipeline as the fixture. Run: node scripts/e2e-uncovered.mjs
 import { chromium } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";

@@ -3,7 +3,7 @@ import { deleteImage, updateImageMeta } from "@/lib/store";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const ok = deleteImage(id);
+  const ok = await deleteImage(id);
   return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ ok: false }, { status: 404 });
 }
 

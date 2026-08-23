@@ -40,6 +40,14 @@ export function getImages(): ImageMeta[] {
   }
 }
 
+// atomic manifest save: tmp file + rename in the same dir. A crash mid-write
+// can never leave a truncated manifest (which would blank the whole wall).
+function saveManifest(images: ImageMeta[]): void {
+  const tmp = `${MANIFEST}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(images, null, 2));
+  fs.renameSync(tmp, MANIFEST);
+}
+
 export function addImage(
   meta: Omit<ImageMeta, "id" | "path" | "uploaded_at"> & { buf?: Buffer }
 ): Promise<ImageMeta> {
@@ -59,7 +67,7 @@ export function addImage(
       uploaded_at: new Date().toISOString(),
     };
     images.push(entry);
-    fs.writeFileSync(MANIFEST, JSON.stringify(images, null, 2)); // then manifest
+    saveManifest(images); // then manifest
     return entry;
   });
 }
@@ -74,22 +82,24 @@ export function updateImageMeta(
     const target = images.find((i) => i.id === id);
     if (!target) return null;
     Object.assign(target, patch);
-    fs.writeFileSync(MANIFEST, JSON.stringify(images, null, 2));
+    saveManifest(images);
     return target;
   });
 }
 
-export function deleteImage(id: string): boolean {
-  const images = getImages();
-  const target = images.find((i) => i.id === id);
-  if (!target) return false;
-  const p = path.join(DATA_DIR, path.basename(target.path));
-  if (fs.existsSync(p)) fs.unlinkSync(p);
-  fs.writeFileSync(
-    MANIFEST,
-    JSON.stringify(images.filter((i) => i.id !== id), null, 2)
-  );
-  return true;
+// async + queued like the other writers — a concurrent DELETE racing a PATCH
+// must not lose one of the two updates (both are read-modify-write on the same
+// manifest)
+export function deleteImage(id: string): Promise<boolean> {
+  return enqueue(() => {
+    const images = getImages();
+    const target = images.find((i) => i.id === id);
+    if (!target) return false;
+    const p = path.join(DATA_DIR, path.basename(target.path));
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+    saveManifest(images.filter((i) => i.id !== id));
+    return true;
+  });
 }
 
 export const UPLOAD_DIR = DATA_DIR;
