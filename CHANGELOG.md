@@ -7,6 +7,7 @@ All notable changes to PicWall are documented here. Format follows
 ## [Unreleased]
 
 ### Added
+- feat: 模型能力测试 — 真实 caption 管线质量评测 (#54)
 - feat: seed fixtures with real Unsplash photos (#51)
 - [ImgBot] Optimize images (#29)
 - feat: local in-browser image captioning (EN caption + ZH translate) (#30)
@@ -17,6 +18,8 @@ All notable changes to PicWall are documented here. Format follows
 - style: Scandinavian redesign — neutral black-and-white system (#40)
 
 ### Fixed
+- fix: store data integrity (P1-A/B/C from audit v2) (#56)
+- fix: coverage gate — getImagesStrict missing-manifest branch (#59)
 - fix(changelog): tolerate PR-less commit ranges + match ImgBot rows (#47)
 - fix(changelog): merge into existing Unreleased section (#49)
 - fix: hovered card floating above lightbox overlay (#32)
@@ -27,6 +30,7 @@ All notable changes to PicWall are documented here. Format follows
 - docs: user manual chapter for AI image captioning (#33)
 
 ### Maintenance
+- chore: audit v2 P2 batch (docs order, SHA pin, GET 500, upload errors) (#58)
 - chore(deps): bump actions/checkout from 4.2.2 to 4.4.0 (#25)
 - chore(deps-dev): bump @types/node from 20.17.6 to 20.19.43 in the dev-tooling group (#27)
 - test: unit tests for vision captioning module (#31)
