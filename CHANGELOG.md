@@ -33,6 +33,8 @@ All notable changes to PicWall are documented here. Format follows
 - docs: user manual chapter for AI image captioning (#33)
 
 ### Maintenance
+- chore(deps): bump next from 16.3.1 to 16.3.2 in the runtime group (#66)
+- chore(deps): bump @huggingface/transformers from 3.7.6 to 3.8.1 in the dev-tooling group (#67)
 - chore: audit v2 P2 batch (docs order, SHA pin, GET 500, upload errors) (#58)
 - chore(deps): bump actions/checkout from 4.2.2 to 4.4.0 (#25)
 - chore(deps-dev): bump @types/node from 20.17.6 to 20.19.43 in the dev-tooling group (#27)
