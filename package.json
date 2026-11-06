@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.4",
     "cuelume": "^0.2.2",
     "next": "^16.3.2",
     "react": "^19.2.8",
@@ -23,11 +23,11 @@
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
-    "@playwright/test": "^1.62.1",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/postcss": "^4.3.4",
     "@types/node": "20.19.43",
     "@types/react": "19.2.18",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "v8-to-istanbul": "^9.3.0",
