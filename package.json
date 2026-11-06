@@ -15,20 +15,20 @@
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
     "@tailwindcss/postcss": "^4.3.3",
-    "cuelume": "^0.2.2",
-    "next": "^16.3.2",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tailwindcss": "^4.3.3"
+    "cuelume": "^0.2.8",
+    "next": "^16.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.4"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "20.19.43",
-    "@types/react": "19.2.18",
+    "@types/react": "19.3.0",
     "@vitest/coverage-v8": "^4.1.11",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "typescript": "^7.0.2",
     "v8-to-istanbul": "^9.3.0",
     "vitest": "^4.1.11"
